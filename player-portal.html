@@ -1,0 +1,1182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<meta name="theme-color" content="#08090d"/>
+<link rel="manifest" href="#" id="pwa-manifest"/>
+<title>TM Analytics — Player Portal</title>
+<style>
+/* ── Variables ───────────────────────────────────────────── */
+:root{
+  --bg:#08090d;--s1:#10121a;--s2:#181b24;--s3:#1e222e;
+  --b1:#242836;--b2:#2e3345;--text:#e8ecf4;--muted:#6b7585;--dim:#3a3f50;
+  --accent:#f26722;--adk:#c9521a;
+  --green:#22c55e;--red:#ef4444;--yellow:#eab308;--blue:#3b82f6;--purple:#8b5cf6;
+  --c-ff:#e53e3e;--c-si:#ed8936;--c-sl:#3b82f6;--c-cu:#10b981;
+  --c-ch:#94a3b8;--c-fc:#8b5cf6;--c-fs:#0891b2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased}
+button{cursor:pointer;font-family:inherit;border:none}
+input,select,textarea{outline:none;font-family:inherit}
+.hidden{display:none!important}
+a{color:inherit;text-decoration:none}
+
+/* ── Layout shell ────────────────────────────────────────── */
+.topnav{position:sticky;top:0;z-index:100;height:56px;
+  background:rgba(8,9,13,.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--b1);
+  display:flex;align-items:center;padding:0 24px;gap:14px}
+.nav-logo{font-size:17px;font-weight:900;letter-spacing:.28em;white-space:nowrap}
+.nav-logo span{color:var(--accent)}
+.nav-links{display:flex;gap:2px;margin-left:4px}
+.nav-link{padding:6px 12px;border-radius:8px;font-size:13px;font-weight:600;
+  color:var(--muted);transition:all .15s;cursor:pointer}
+.nav-link:hover{color:var(--text);background:var(--s2)}
+.nav-link.on{color:var(--text);background:var(--s2)}
+.nav-sp{flex:1}
+.nav-av-wrap{display:flex;align-items:center;gap:8px;background:var(--s2);
+  border:1px solid var(--b2);border-radius:10px;padding:5px 12px 5px 7px;cursor:pointer}
+.nav-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:10px;font-weight:900;color:#fff;background:var(--accent)}
+.nav-nm{font-size:13px;font-weight:700}
+.nav-out{padding:7px 14px;border-radius:9px;font-size:12px;font-weight:700;
+  background:var(--s2);border:1px solid var(--b2);color:var(--muted)}
+.nav-out:hover{color:var(--text)}
+.page{max-width:1100px;margin:0 auto;padding:32px 24px;width:100%}
+.page-head{margin-bottom:26px}
+.page-head h1{font-size:28px;font-weight:900;margin-bottom:4px}
+.page-head p{font-size:14px;color:var(--muted)}
+
+/* ── Auth ────────────────────────────────────────────────── */
+#pg-auth{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 0%,rgba(242,103,34,.1) 0%,transparent 65%);padding:20px}
+.auth-card{background:var(--s1);border:1px solid var(--b2);border-radius:20px;
+  padding:40px 36px;width:100%;max-width:420px}
+.auth-logo{font-size:26px;font-weight:900;letter-spacing:.28em;text-align:center;margin-bottom:4px}
+.auth-logo span{color:var(--accent)}
+.auth-sub{text-align:center;font-size:11px;letter-spacing:.12em;color:var(--muted);
+  font-weight:700;margin-bottom:30px}
+.auth-tabs{display:flex;background:var(--s2);border-radius:10px;padding:4px;margin-bottom:26px}
+.atab{flex:1;padding:8px;border-radius:7px;font-size:13px;font-weight:700;
+  color:var(--muted);text-align:center;cursor:pointer;transition:all .15s}
+.atab.on{background:var(--s3);color:var(--text)}
+.frow{margin-bottom:13px}
+.frow label{display:block;font-size:9px;letter-spacing:.13em;color:var(--muted);
+  font-weight:800;margin-bottom:5px}
+.frow input,.frow select{width:100%;background:var(--s2);border:1px solid var(--b2);
+  border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px}
+.frow input:focus,.frow select:focus{border-color:var(--accent)}
+.frow .hint{font-size:10px;color:var(--dim);margin-top:3px}
+.auth-btn{width:100%;background:var(--accent);color:#fff;border-radius:11px;
+  padding:13px;font-size:15px;font-weight:800;margin-top:6px}
+.auth-btn:hover{background:var(--adk)}
+.auth-err{font-size:12px;color:var(--red);text-align:center;margin-top:10px;min-height:16px}
+.auth-note{font-size:11px;color:var(--dim);text-align:center;margin-top:12px;line-height:1.6}
+
+/* ── Cards & sections ────────────────────────────────────── */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:14px;padding:18px 20px}
+.card h4{font-size:9px;letter-spacing:.14em;color:var(--muted);font-weight:800;margin-bottom:14px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sec-head h2{font-size:14px;font-weight:800;letter-spacing:.04em}
+.sec-link{font-size:12px;color:var(--accent);font-weight:700;cursor:pointer}
+.stat-grid{display:grid;gap:12px}
+.stat-cell{background:var(--s2);border-radius:10px;padding:13px;text-align:center}
+.stat-cell .sv{font-size:24px;font-weight:900;line-height:1}
+.stat-cell .sl{font-size:8px;letter-spacing:.12em;color:var(--muted);font-weight:800;margin-top:3px}
+
+/* ── Session cards ───────────────────────────────────────── */
+.sc{background:var(--s1);border:1px solid var(--b1);border-radius:14px;
+  padding:16px 20px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:16px;margin-bottom:10px}
+.sc:hover{border-color:var(--b2);background:var(--s2)}
+.sc-date{flex:0 0 52px;text-align:center}
+.sc-month{font-size:9px;letter-spacing:.1em;color:var(--muted);font-weight:800}
+.sc-day{font-size:24px;font-weight:900;line-height:1.1}
+.sc-div{width:1px;height:36px;background:var(--b1)}
+.sc-info{flex:1}
+.sc-title{font-size:14px;font-weight:800;margin-bottom:3px}
+.sc-meta{font-size:11px;color:var(--muted);font-weight:600}
+.sc-pills{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.pill{font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px}
+.sc-nums{display:flex;gap:18px}
+.sc-num strong{display:block;font-size:15px;font-weight:900}
+.sc-num{font-size:9px;color:var(--muted);font-weight:800;letter-spacing:.06em}
+.sc-grade{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;font-size:16px;font-weight:900;flex:0 0 auto}
+.grade-a{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.grade-b{background:rgba(59,130,246,.15);color:var(--blue);border:1px solid rgba(59,130,246,.3)}
+.grade-c{background:rgba(234,179,8,.15);color:var(--yellow);border:1px solid rgba(234,179,8,.3)}
+.grade-d{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+
+/* ── Session detail ──────────────────────────────────────── */
+.back-btn{background:none;color:var(--muted);font-size:13px;font-weight:700;
+  margin-bottom:18px;display:flex;align-items:center;gap:5px;padding:0}
+.back-btn:hover{color:var(--text)}
+.sdh{background:var(--s1);border:1px solid var(--b1);border-radius:16px;
+  padding:22px 24px;margin-bottom:18px}
+.sdh-top{display:flex;align-items:flex-start;gap:16px;margin-bottom:16px}
+.sdh-grade{width:64px;height:64px;border-radius:14px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;flex:0 0 auto}
+.sdh-grade .gl{font-size:26px;font-weight:900;line-height:1}
+.sdh-grade .gs{font-size:9px;font-weight:800;letter-spacing:.06em;margin-top:1px}
+.sdh-info{flex:1}
+.sdh-info h2{font-size:20px;font-weight:900;margin-bottom:3px}
+.sdh-info p{font-size:12px;color:var(--muted)}
+.sdh-acts{display:flex;gap:8px;margin-left:auto;align-items:flex-start}
+.act-btn{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;
+  background:var(--s2);border:1px solid var(--b2);color:var(--text);transition:all .15s}
+.act-btn:hover{background:var(--s3)}
+.act-btn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.act-btn.on{background:rgba(242,103,34,.15);border-color:var(--accent);color:var(--accent)}
+.sdh-stats{display:grid;grid-template-columns:repeat(5,1fr);background:var(--s2);
+  border-radius:12px;overflow:hidden}
+.sdhs{padding:12px;text-align:center;border-right:1px solid var(--b1)}
+.sdhs:last-child{border-right:none}
+.sdhs .v{font-size:20px;font-weight:900}
+.sdhs .l{font-size:8px;letter-spacing:.12em;color:var(--muted);font-weight:800;margin-top:2px}
+.detail-tabs{display:flex;gap:2px;background:var(--s2);border-radius:10px;padding:4px;margin-bottom:18px}
+.dtab{flex:1;padding:8px;border-radius:7px;font-size:12px;font-weight:700;
+  color:var(--muted);text-align:center;cursor:pointer;transition:all .15s;white-space:nowrap}
+.dtab.on{background:var(--s1);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.detail-full{grid-column:1/-1}
+
+/* ── AI Debrief ──────────────────────────────────────────── */
+.debrief{background:linear-gradient(135deg,var(--s2) 0%,var(--s1) 100%);
+  border:1px solid var(--b2);border-radius:14px;padding:20px 22px;
+  border-left:3px solid var(--accent)}
+.debrief-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.debrief-icon{width:32px;height:32px;border-radius:8px;background:rgba(242,103,34,.15);
+  border:1px solid rgba(242,103,34,.3);display:flex;align-items:center;
+  justify-content:center;font-size:16px;flex:0 0 auto}
+.debrief-head h3{font-size:13px;font-weight:800;letter-spacing:.04em}
+.debrief-head span{font-size:11px;color:var(--muted);margin-left:auto}
+.debrief-section{margin-bottom:14px}
+.debrief-section:last-child{margin-bottom:0}
+.debrief-section .ds-title{font-size:9px;letter-spacing:.14em;color:var(--accent);
+  font-weight:800;margin-bottom:6px}
+.debrief-section p{font-size:13px;line-height:1.65;color:#c8cdd8}
+.debrief-section ul{list-style:none;display:flex;flex-direction:column;gap:5px}
+.debrief-section ul li{font-size:13px;line-height:1.55;color:#c8cdd8;
+  padding-left:16px;position:relative}
+.debrief-section ul li::before{content:'›';position:absolute;left:0;color:var(--accent);font-weight:800}
+.debrief-section ul li.flag::before{content:'⚠';font-size:11px;left:-1px}
+.debrief-section ul li.flag{color:var(--yellow)}
+.debrief-section ul li.good::before{content:'✓';color:var(--green);font-weight:800}
+.debrief-section ul li.good{color:#a7f3d0}
+
+/* ── Percentile bars ─────────────────────────────────────── */
+.type-section{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--b1)}
+.type-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.ts-head{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.ts-dot{width:10px;height:10px;border-radius:50%}
+.ts-name{font-size:14px;font-weight:800}
+.ts-count{font-size:11px;color:var(--muted);font-weight:600}
+.ts-usage{margin-left:auto;font-size:11px;font-weight:800;padding:2px 8px;
+  border-radius:6px;background:var(--s2)}
+.ts-nums{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.tsn{background:var(--s2);border-radius:9px;padding:10px;text-align:center}
+.tsn .v{font-size:16px;font-weight:900}
+.tsn .l{font-size:8px;letter-spacing:.1em;color:var(--muted);font-weight:800;margin-top:2px}
+.pbar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.pbar-lbl{width:80px;font-size:10px;color:var(--muted);font-weight:700;flex:0 0 auto}
+.pbar-track{flex:1;height:5px;background:var(--s2);border-radius:3px;position:relative}
+.pbar-fill{position:absolute;left:0;top:0;height:100%;border-radius:3px;transition:width .8s ease}
+.pbar-p25{position:absolute;left:25%;top:-4px;bottom:-4px;width:1px;background:rgba(255,255,255,.15)}
+.pbar-p75{position:absolute;left:75%;top:-4px;bottom:-4px;width:1px;background:rgba(255,255,255,.15)}
+.pbar-val{width:48px;font-size:10px;font-weight:800;text-align:right}
+.pbar-pct{width:34px;font-size:10px;font-weight:900;text-align:right}
+.pct-elite{color:var(--green)} .pct-good{color:var(--accent)} .pct-avg{color:var(--yellow)} .pct-low{color:var(--red)}
+
+/* ── MLB comp card ───────────────────────────────────────── */
+.comp-card{background:var(--s2);border-radius:12px;padding:14px 16px;
+  display:flex;align-items:center;gap:14px}
+.comp-icon{width:48px;height:48px;border-radius:12px;background:var(--s3);
+  border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:22px}
+.comp-name{font-size:16px;font-weight:900}
+.comp-team{font-size:11px;color:var(--muted);font-weight:600;margin-top:2px}
+.comp-sim{margin-left:auto;text-align:right}
+.comp-sim .pct{font-size:22px;font-weight:900;color:var(--accent)}
+.comp-sim .lbl{font-size:9px;color:var(--muted);font-weight:800;letter-spacing:.06em}
+.comp-by-type{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.comp-pill{font-size:10px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--s3);border:1px solid var(--b2)}
+
+/* ── Pitch Design Tool ───────────────────────────────────── */
+.pd-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.pd-controls{display:flex;flex-direction:column;gap:12px}
+.slider-row{display:flex;flex-direction:column;gap:4px}
+.slider-row .sr-head{display:flex;justify-content:space-between;align-items:center}
+.slider-row .sr-lbl{font-size:10px;letter-spacing:.1em;color:var(--muted);font-weight:800}
+.slider-row .sr-val{font-size:14px;font-weight:900}
+.slider-row input[type=range]{width:100%;-webkit-appearance:none;height:4px;
+  background:var(--b2);border-radius:2px;cursor:pointer}
+.slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;
+  width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer}
+.clock-wrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+.clock-wrap label{font-size:10px;letter-spacing:.1em;color:var(--muted);font-weight:800}
+.tilt-select{background:var(--s2);border:1px solid var(--b2);border-radius:8px;
+  padding:8px 12px;color:var(--text);font-size:13px;width:100%}
+.pd-viz{display:flex;flex-direction:column;gap:10px}
+.pd-output{background:var(--s2);border-radius:10px;padding:12px;display:grid;
+  grid-template-columns:1fr 1fr;gap:8px}
+.pd-metric .pm-v{font-size:22px;font-weight:900}
+.pd-metric .pm-l{font-size:9px;letter-spacing:.1em;color:var(--muted);font-weight:800}
+.pd-delta{font-size:11px;font-weight:800;padding:1px 6px;border-radius:4px;margin-top:2px;display:inline-block}
+.pd-delta.pos{background:rgba(34,197,94,.12);color:var(--green)}
+.pd-delta.neg{background:rgba(239,68,68,.12);color:var(--red)}
+.pd-delta.neu{background:var(--s3);color:var(--muted)}
+
+/* ── Career / Analyze charts ─────────────────────────────── */
+.arc-card{background:var(--s1);border:1px solid var(--b1);border-radius:14px;
+  padding:18px 20px;margin-bottom:16px}
+.arc-card h4{font-size:9px;letter-spacing:.14em;color:var(--muted);font-weight:800;margin-bottom:12px}
+.trend-legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.tl-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);font-weight:700}
+.tl-dot{width:8px;height:8px;border-radius:50%}
+.analyze-tabs{display:flex;gap:2px;background:var(--s2);border-radius:10px;padding:4px;margin-bottom:18px}
+
+/* ── Compare ─────────────────────────────────────────────── */
+.cmp-sels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.cmp-sel-wrap label{display:block;font-size:9px;letter-spacing:.12em;color:var(--muted);font-weight:800;margin-bottom:5px}
+.cmp-sel{width:100%;background:var(--s2);border:1px solid var(--b2);
+  border-radius:10px;padding:10px 12px;color:var(--text);font-size:13px}
+.cmp-legend{display:flex;gap:16px;margin-bottom:14px}
+.cmp-leg{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700}
+.cmp-leg-dot{width:10px;height:10px;border-radius:50%}
+.cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cmp-stat-row{display:flex;align-items:center;gap:8px;padding:8px 0;
+  border-bottom:1px solid var(--b1);font-size:12px}
+.cmp-stat-row:last-child{border-bottom:none}
+.cmp-lbl{flex:1;color:var(--muted);font-size:11px;font-weight:700}
+.cmp-a{font-weight:900;font-size:15px;color:var(--accent);min-width:50px;text-align:right}
+.cmp-b{font-weight:900;font-size:15px;color:var(--blue);min-width:50px;text-align:right}
+.cmp-d{font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;min-width:44px;text-align:center}
+.cmp-d.pos{background:rgba(34,197,94,.12);color:var(--green)}
+.cmp-d.neg{background:rgba(239,68,68,.12);color:var(--red)}
+.cmp-d.neu{background:var(--s2);color:var(--muted)}
+
+/* ── Video placeholder ───────────────────────────────────── */
+.video-ph{background:var(--s2);border-radius:12px;aspect-ratio:16/9;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;color:var(--dim);text-align:center;padding:20px}
+.video-ph .vpi{font-size:44px}
+.video-ph h3{font-size:14px;font-weight:700;color:var(--muted)}
+.video-ph p{font-size:11px;max-width:260px;line-height:1.6}
+.video-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.video-cell{aspect-ratio:16/9;background:var(--s2);border-radius:9px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--dim)}
+.pitch-video-row{display:flex;gap:6px;overflow-x:auto;padding:2px 0;margin-bottom:10px}
+.pvr-item{flex:0 0 auto;background:var(--s2);border-radius:8px;padding:6px 10px;
+  font-size:11px;font-weight:700;cursor:pointer;border:1px solid transparent;
+  display:flex;align-items:center;gap:6px;white-space:nowrap;transition:all .15s}
+.pvr-item.sel{border-color:var(--accent);color:var(--accent)}
+.pvr-item .pv-dot{width:7px;height:7px;border-radius:50%}
+
+/* ── Notes ───────────────────────────────────────────────── */
+.notes-area{width:100%;background:var(--s2);border:1px solid var(--b2);
+  border-radius:10px;padding:12px;color:var(--text);font-size:13px;
+  resize:none;min-height:80px;line-height:1.6}
+.notes-area:focus{border-color:var(--accent)}
+.notes-save{padding:8px 18px;background:var(--accent);color:#fff;border-radius:8px;
+  font-size:13px;font-weight:700;margin-top:8px}
+.coach-note{background:var(--s2);border-radius:10px;padding:12px;
+  font-size:13px;color:var(--muted);font-style:italic;line-height:1.6}
+
+/* ── Share modal ─────────────────────────────────────────── */
+#modal-share{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.share-box{background:var(--s1);border:1px solid var(--b2);border-radius:16px;
+  padding:28px;width:100%;max-width:420px}
+.share-box h3{font-size:16px;font-weight:800;margin-bottom:12px}
+.share-box p{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6}
+.share-url{background:var(--s2);border:1px solid var(--b2);border-radius:9px;
+  padding:10px 13px;font-size:11px;color:var(--text);word-break:break-all;margin-bottom:14px}
+.share-acts{display:flex;gap:8px}
+.share-copy{flex:1;background:var(--accent);color:#fff;border-radius:9px;
+  padding:10px;font-size:13px;font-weight:800}
+.share-close{background:var(--s2);border:1px solid var(--b2);color:var(--text);
+  border-radius:9px;padding:10px 14px;font-size:13px;font-weight:700}
+
+/* ── Toast ───────────────────────────────────────────────── */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:var(--s1);border:1px solid var(--b2);border-radius:10px;
+  padding:10px 20px;font-size:13px;font-weight:700;opacity:0;
+  transition:opacity .2s;pointer-events:none;z-index:900;white-space:nowrap}
+#toast.show{opacity:1}
+
+/* ── Loading / Empty ─────────────────────────────────────── */
+.loading{display:flex;align-items:center;justify-content:center;
+  padding:60px;color:var(--muted);font-size:13px;gap:8px}
+.empty{padding:60px 24px;text-align:center;color:var(--muted)}
+.empty .ei{font-size:44px;margin-bottom:12px;display:block}
+.empty h3{font-size:17px;font-weight:800;color:var(--text);margin-bottom:6px}
+.empty p{font-size:12px;line-height:1.7;max-width:280px;margin:0 auto}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media(max-width:700px){
+  .detail-grid,.cmp-grid{grid-template-columns:1fr}
+  .detail-full{grid-column:1}
+  .sdh-stats{grid-template-columns:repeat(3,1fr)}
+  .ts-nums{grid-template-columns:1fr 1fr}
+  .nav-links{display:none}
+  .page{padding:18px 14px}
+  .topnav{padding:0 14px}
+  .pd-grid{grid-template-columns:1fr}
+}
+@media print{
+  .topnav,.act-btn,.back-btn,.detail-tabs,.share-box,#modal-share{display:none!important}
+  .page{max-width:100%;padding:10px}
+  body{background:#fff;color:#000}
+}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- Share modal -->
+<div id="modal-share" class="hidden">
+  <div class="share-box">
+    <h3>Share Session</h3>
+    <p>Anyone with this link can view this session — no login required. Perfect for sending to your team's pitching coach or agent.</p>
+    <div class="share-url" id="share-url-text">Generating…</div>
+    <div class="share-acts">
+      <button class="share-copy" onclick="copyShareUrl()">Copy Link</button>
+      <button class="share-close" onclick="$('modal-share').classList.add('hidden')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Auth -->
+<div id="pg-auth">
+  <div class="auth-card">
+    <div class="auth-logo">TM<span> ANALYTICS</span></div>
+    <div class="auth-sub">PLAYER PORTAL</div>
+    <div class="auth-tabs">
+      <div class="atab on" onclick="authTab('login')">Sign In</div>
+      <div class="atab" onclick="authTab('register')">Create Account</div>
+    </div>
+    <div id="auth-login-form">
+      <div class="frow"><label>EMAIL</label>
+        <input type="email" id="l-email" placeholder="you@example.com" autocomplete="email"/></div>
+      <div class="frow"><label>PASSWORD</label>
+        <input type="password" id="l-pw" placeholder="Password" autocomplete="current-password"/></div>
+      <button class="auth-btn" onclick="doLogin()">Sign In</button>
+    </div>
+    <div id="auth-reg-form" class="hidden">
+      <div class="frow"><label>INVITE CODE</label>
+        <input type="text" id="r-invite" placeholder="Provided by your facility" autocomplete="off"
+          style="font-family:monospace;letter-spacing:.04em"/></div>
+      <div class="frow"><label>FULL NAME</label>
+        <input type="text" id="r-name" placeholder="First Last" autocomplete="name"/></div>
+      <div class="frow"><label>EMAIL</label>
+        <input type="email" id="r-email" placeholder="you@example.com" autocomplete="email"/></div>
+      <div class="frow"><label>PASSWORD</label>
+        <input type="password" id="r-pw" placeholder="At least 8 characters" autocomplete="new-password"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="frow"><label>THROWS</label>
+          <select id="r-throws"><option value="R">RHP</option><option value="L">LHP</option></select></div>
+        <div class="frow"><label>POSITION</label>
+          <select id="r-pos"><option value="SP">SP</option><option value="RP">RP</option><option value="CL">CL</option></select></div>
+      </div>
+      <div class="frow"><label>TEAM / ORG</label>
+        <input type="text" id="r-team" placeholder="e.g. Los Angeles Dodgers"/></div>
+      <button class="auth-btn" onclick="doRegister()">Create Account</button>
+      <div class="auth-note">You need an invite code from your facility to register. After creating your account, your profile will be linked automatically.</div>
+    </div>
+    <div class="auth-err" id="auth-err"></div>
+    <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--b1)">
+      <div style="font-size:10px;letter-spacing:.1em;font-weight:700;color:var(--muted);margin-bottom:6px">API URL</div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="login-api-url" placeholder="https://tmanalytics.onrender.com"
+          style="flex:1;background:var(--s2);border:1px solid var(--b2);border-radius:8px;
+          padding:8px 11px;color:var(--text);font-size:12px"/>
+        <button onclick="saveApiFromLogin()"
+          style="background:var(--s2);border:1px solid var(--b2);border-radius:8px;
+          padding:8px 12px;font-size:11px;font-weight:700;color:var(--muted)">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- App shell -->
+<div id="app" class="hidden" style="min-height:100vh;display:flex;flex-direction:column">
+  <nav class="topnav">
+    <div class="nav-logo">TM<span> ANALYTICS</span></div>
+    <div class="nav-links">
+      <div class="nav-link on"  id="nl-dashboard" onclick="nav('dashboard')">Dashboard</div>
+      <div class="nav-link"     id="nl-sessions"  onclick="nav('sessions')">Sessions</div>
+      <div class="nav-link"     id="nl-analyze"   onclick="nav('analyze')">Analyze</div>
+      <div class="nav-link"     id="nl-compare"   onclick="nav('compare')">Compare</div>
+    </div>
+    <div class="nav-sp"></div>
+    <div class="nav-av-wrap" onclick="nav('settings')">
+      <div class="nav-av" id="nav-av">?</div>
+      <div class="nav-nm" id="nav-nm">Player</div>
+    </div>
+    <button class="nav-out" onclick="logout()">Sign Out</button>
+  </nav>
+  <div style="flex:1">
+    <div class="page" id="pg-dashboard"></div>
+    <div class="page hidden" id="pg-sessions"></div>
+    <div class="page hidden" id="pg-session"></div>
+    <div class="page hidden" id="pg-analyze"></div>
+    <div class="page hidden" id="pg-compare"></div>
+    <div class="page hidden" id="pg-settings">
+      <div class="page-head"><h1>Settings</h1></div>
+      <div style="max-width:480px">
+        <div class="card" style="margin-bottom:14px">
+          <h4>CLOUD API URL</h4>
+          <div class="frow">
+            <input type="text" id="set-api" placeholder="https://your-app.railway.app"/>
+            <div class="hint">Where your TM Analytics cloud backend is hosted</div>
+          </div>
+          <button class="notes-save" onclick="saveApiUrl()">Save & Re-login</button>
+        </div>
+        <div class="card">
+          <h4>ACCOUNT</h4>
+          <div class="frow"><label>NAME</label><input type="text" id="set-name"/></div>
+          <div class="frow"><label>TEAM</label><input type="text" id="set-team"/></div>
+          <button class="notes-save" onclick="saveProfile()">Update Profile</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   TM ANALYTICS — PLAYER PORTAL ENGINE
+   DEMO MODE: runs fully offline with seeded data.
+   No cloud, no Pi, no network. Any email/password signs you in.
+   To go live later: set CLOUD API URL in Settings (disables demo).
+   ═══════════════════════════════════════════════════════════ */
+const $=id=>document.getElementById(id);
+const DEMO=true;  // flips off automatically once a real API URL is saved
+
+/* ── Pitch types + MLB benchmark ranges (≈10th–90th pct) ──── */
+/* MLB benchmark bands = approx 10th–90th percentile per metric, RHP-oriented.
+   Source: Baseball Savant / Statcast 2024 league averages (pitch-movement +
+   pitch-arsenal leaderboards). FF directly verified against pulled 2024
+   per-pitcher rows (league HB ~8.4", IVB ~16-17", velo ~94.2). HB sign:
+   + = arm-side, − = glove-side. eff = active-spin / spin efficiency %. */
+const PITCH={
+  FF:{name:'Four-Seam',col:'#e53e3e',mlb:{velo:[91,97.5], spin:[2100,2580],eff:[86,98],ivb:[12,19.5], hb:[4,12],  ext:[6.0,7.1]}},
+  SI:{name:'Sinker',   col:'#ed8936',mlb:{velo:[90.5,96.5],spin:[1950,2350],eff:[84,98],ivb:[4,12.5],  hb:[11,19], ext:[5.9,7.0]}},
+  FC:{name:'Cutter',   col:'#8b5cf6',mlb:{velo:[86,93],   spin:[2150,2650],eff:[40,80],ivb:[3,13],     hb:[-4,3],  ext:[5.9,6.9]}},
+  SL:{name:'Slider',   col:'#3b82f6',mlb:{velo:[80,89.5], spin:[2150,2750],eff:[18,62],ivb:[-3,5],     hb:[-13,-1],ext:[5.8,6.8]}},
+  CU:{name:'Curveball',col:'#10b981',mlb:{velo:[75,84],   spin:[2300,2850],eff:[50,85],ivb:[-17,-6],   hb:[-14,-3],ext:[5.6,6.6]}},
+  CH:{name:'Changeup', col:'#94a3b8',mlb:{velo:[81,89],   spin:[1500,2050],eff:[80,97],ivb:[2,11],     hb:[10,19], ext:[6.0,7.0]}}
+};
+const TILT={FF:'12:30',SI:'1:45',FC:'11:15',SL:'9:30',CU:'7:00',CH:'2:15'};
+
+/* ── Deterministic RNG so demo looks the same every open ──── */
+let _seed=20260613;
+function rng(){_seed=(_seed*1103515245+12345)&0x7fffffff;return _seed/0x7fffffff;}
+function jitter(base,spread){return base+(rng()*2-1)*spread;}
+
+/* ── Demo pitcher arsenal (target means) ─────────────────── */
+const ARSENAL={
+  FF:{velo:94.2,spin:2380,eff:96,ivb:17.8,hb:7.5,ext:6.6,usage:.42},
+  SL:{velo:86.4,spin:2620,eff:42,ivb:1.1,hb:-6.8,ext:6.4,usage:.24},
+  CH:{velo:86.1,spin:1720,eff:90,ivb:7.2,hb:14.6,ext:6.6,usage:.18},
+  CU:{velo:79.8,spin:2780,eff:74,ivb:-11.4,hb:-8.2,ext:6.2,usage:.16}
+};
+
+/* ── Live-AB outcomes (only logged for Live AB sessions) ─── */
+const OUTCOMES=[
+  {k:'ball',  lbl:'Ball',         col:'var(--muted)', z:false,w:34},
+  {k:'called',lbl:'Called Strike',col:'var(--green)', z:true, w:20},
+  {k:'swing', lbl:'Swing & Miss', col:'var(--accent)',z:true, w:12},
+  {k:'foul',  lbl:'Foul',         col:'var(--yellow)',z:true, w:16},
+  {k:'hit',   lbl:'Hit',          col:'var(--red)',   z:true, w:8},
+  {k:'out',   lbl:'In-Play Out',  col:'var(--blue)',  z:true, w:10}
+];
+const OUT_BY_K=Object.fromEntries(OUTCOMES.map(o=>[o.k,o]));
+function inZone(px,pz){return Math.abs(px)<=0.83 && pz>=1.5 && pz<=3.5;}
+function randOutcome(iz){            // in-zone biases toward strikes/contact
+  const pool=OUTCOMES.map(o=>({o,w:o.w*(o.z===iz?2.2:0.5)}));
+  let tot=pool.reduce((a,p)=>a+p.w,0),x=rng()*tot;
+  for(const p of pool){if((x-=p.w)<=0)return p.o;}
+  return OUTCOMES[0];
+}
+
+/* Session kinds: liveab logs hitter outcomes; bullpen/flatground = ball-flight only */
+const KINDS={bullpen:'Bullpen',liveab:'Live ABs',flatground:'Flat Ground'};
+/* Rebuild per-type aggregates from the pitch log (called after any reclassification) */
+function recomputeTypes(s){
+  const types={};
+  s.log.forEach(p=>{(types[p.type]=types[p.type]||{count:0,_p:[]});types[p.type].count++;types[p.type]._p.push(p);});
+  for(const k in types){const ps=types[k]._p,avg=f=>ps.reduce((a,p)=>a+p[f],0)/ps.length;
+    types[k].velo=+avg('velo').toFixed(1); types[k].spin=Math.round(avg('spin'));
+    types[k].eff=Math.round(avg('eff'));   types[k].ivb=+avg('ivb').toFixed(1);
+    types[k].hb=+avg('hb').toFixed(1);     types[k].ext=+avg('ext').toFixed(2);
+    types[k].tilt=TILT[k]; types[k].pitches=ps;}
+  s.types=types; s.count=s.log.length;
+}
+function buildSessions(){
+  const out=[]; const today=new Date('2026-06-12');
+  const labels=['Bullpen — Recovery','Bullpen — Full','Live ABs','Pen + Pitch Design','Bullpen — Full','Flat Ground + Pen'];
+  const kinds =['bullpen','bullpen','liveab','bullpen','bullpen','flatground'];
+  for(let s=0;s<6;s++){
+    const d=new Date(today); d.setDate(today.getDate()-(5-s)*7-(rng()<.5?1:0));
+    const trend=s*0.18; const kind=kinds[s];   // velo creeps up over weeks
+    // 1) generate every pitch (typeAuto = what Rapsodo auto-classified)
+    let pool=[];
+    for(const k in ARSENAL){
+      const a=ARSENAL[k];
+      const n=Math.max(3,Math.round((20+rng()*16)*a.usage*2));
+      for(let i=0;i<n;i++){
+        const px=+jitter(0,0.85).toFixed(2), pz=+jitter(2.45,0.8).toFixed(2);
+        pool.push({type:k,typeAuto:k,corrected:false,
+          velo:+jitter(a.velo+trend,1.1).toFixed(1),
+          spin:Math.round(jitter(a.spin,90)),
+          eff:Math.round(jitter(a.eff,4)),
+          ivb:+jitter(a.ivb,1.4).toFixed(1),
+          hb:+jitter(a.hb,1.6).toFixed(1),
+          ext:+jitter(a.ext,0.12).toFixed(2),
+          px,pz});
+      }
+    }
+    // 2) shuffle into realistic thrown order (seeded Fisher–Yates)
+    for(let i=pool.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+    pool.forEach((p,i)=>{p.seq=i+1;p.iz=inZone(p.px,p.pz);
+      p.result=(kind==='liveab')?randOutcome(p.iz):null;});  // outcomes only for Live ABs
+    const sess={id:'s'+s,date:d.toISOString().slice(0,10),title:labels[s],kind,
+      log:pool,notes:s===4?'Felt great. Slider had real bite today.':'',
+      coachNote:s===1?'Stay tall through release — you drifted on the changeup.':''};
+    recomputeTypes(sess);
+    out.push(sess);
+  }
+  return out.reverse();   // newest first
+}
+
+/* ── State ───────────────────────────────────────────────── */
+const CLOUD_URL='https://tmanalytics.onrender.com';
+let STATE={player:null,sessions:[],apiUrl:CLOUD_URL,cur:null,selPitch:1,sessTab:'overview',pitchFilter:'all'};
+
+/* ── Auth ────────────────────────────────────────────────── */
+function authTab(t){
+  $('auth-login-form').classList.toggle('hidden',t!=='login');
+  $('auth-reg-form').classList.toggle('hidden',t!=='register');
+  document.querySelectorAll('.atab').forEach((e,i)=>e.classList.toggle('on',(t==='login')===(i===0)));
+  $('auth-err').textContent='';
+}
+function _showApp(){
+  $('pg-auth').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  const init=STATE.player.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  $('nav-av').textContent=init; $('nav-nm').textContent=STATE.player.name;
+  nav('dashboard');
+}
+function enterApp(name,throws,pos,team){
+  STATE.player={name:name||'Demo Pitcher',throws:throws||'R',pos:pos||'SP',team:team||''};
+  STATE.sessions=buildSessions();
+  _showApp();
+}
+async function enterAppLive(playerData,token){
+  STATE.player={name:playerData.name,throws:playerData.throws,pos:playerData.position,team:playerData.team||'',token};
+  try{
+    const r=await fetch(`${STATE.apiUrl}/me/sessions`,{headers:{'Authorization':'Bearer '+token}});
+    STATE.sessions=r.ok?(await r.json()).map(convertApiSession):[];
+  }catch(e){STATE.sessions=[];}
+  _showApp();
+}
+function convertApiSession(s){
+  const pitches=(s.pitches||[]).map((p,i)=>({...p,seq:i+1,typeAuto:p.type,corrected:false,
+    iz:Math.abs(p.px||0)<=0.83&&(p.pz||2.5)>=1.5&&(p.pz||2.5)<=3.5,result:null}));
+  const sess={id:s.id,date:s.date.slice(0,10),
+    title:'Session — '+new Date(s.date+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}),
+    kind:'bullpen',log:pitches,notes:s.playerNotes||'',coachNote:s.coachNotes||'',_api:true};
+  recomputeTypes(sess); return sess;
+}
+async function doLogin(){
+  const em=$('l-email').value.trim(),pw=$('l-pw').value;
+  if(!em){$('auth-err').textContent='Enter your email.';return;}
+  if(!STATE.apiUrl){enterApp();return;}
+  $('auth-err').textContent='Signing in…';
+  try{
+    const r=await fetch(`${STATE.apiUrl}/auth/login`,{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em,password:pw})});
+    if(!r.ok){$('auth-err').textContent=(await r.json()).detail||'Invalid email or password.';return;}
+    const {token,player}=await r.json();
+    localStorage.setItem('tma_token',token); localStorage.setItem('tma_apiUrl',STATE.apiUrl);
+    await enterAppLive(player,token);
+  }catch(e){$('auth-err').textContent='Cannot reach server. Check the API URL in Settings.';}
+}
+async function doRegister(){
+  const inv=$('r-invite').value.trim(),nm=$('r-name').value.trim();
+  const em=$('r-email').value.trim(),pw=$('r-pw').value;
+  if(!inv){$('auth-err').textContent='Enter your invite code.';return;}
+  if(!nm){$('auth-err').textContent='Enter your name.';return;}
+  if(!STATE.apiUrl){enterApp(nm,$('r-throws').value,$('r-pos').value,$('r-team').value.trim());return;}
+  if(!em||pw.length<8){$('auth-err').textContent='Email and password (8+ characters) required.';return;}
+  $('auth-err').textContent='Creating account…';
+  try{
+    const r=await fetch(`${STATE.apiUrl}/auth/register`,{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:em,name:nm,password:pw,throws:$('r-throws').value,
+        position:$('r-pos').value,team:$('r-team').value.trim(),invite_code:inv})});
+    if(!r.ok){$('auth-err').textContent=(await r.json()).detail||'Registration failed.';return;}
+    const {token,player}=await r.json();
+    localStorage.setItem('tma_token',token); localStorage.setItem('tma_apiUrl',STATE.apiUrl);
+    await enterAppLive(player,token);
+  }catch(e){$('auth-err').textContent='Cannot reach server.';}
+}
+function logout(){
+  localStorage.removeItem('tma_token');
+  STATE.player=null; STATE.sessions=[];
+  $('app').classList.add('hidden'); $('pg-auth').classList.remove('hidden');
+  authTab('login');
+  if($('login-api-url'))$('login-api-url').value=STATE.apiUrl||'';
+}
+function saveApiFromLogin(){
+  const url=$('login-api-url').value.trim().replace(/\/$/,'');
+  if(!url)return;
+  STATE.apiUrl=url;
+  localStorage.setItem('tma_apiUrl',url);
+  $('set-api').value=url;
+  $('auth-err').textContent='API URL saved — you can now sign in.';
+  setTimeout(()=>$('auth-err').textContent='',2000);
+}
+
+/* ── Nav router ──────────────────────────────────────────── */
+function nav(page){
+  ['dashboard','sessions','session','analyze','compare','settings']
+    .forEach(p=>$('pg-'+p).classList.add('hidden'));
+  document.querySelectorAll('.nav-link').forEach(e=>e.classList.remove('on'));
+  const tab=page==='session'?'sessions':page;
+  if($('nl-'+tab))$('nl-'+tab).classList.add('on');
+  $('pg-'+page).classList.remove('hidden');
+  window.scrollTo(0,0);
+  if(page==='dashboard')renderDashboard();
+  else if(page==='sessions')renderSessions();
+  else if(page==='analyze')renderAnalyze();
+  else if(page==='compare')renderCompare();
+  else if(page==='settings')renderSettings();
+}
+
+/* ── Math helpers ────────────────────────────────────────── */
+function pct(v,lo,hi){return Math.max(1,Math.min(99,Math.round((v-lo)/(hi-lo)*100)));}
+function pctAbs(v,lo,hi){ // for break where sign matters, compare magnitude
+  return pct(Math.abs(v),Math.abs(lo),Math.abs(hi));}
+function pctClass(p){return p>=75?'elite':p>=55?'good':p>=35?'avg':'low';}
+function pctColor(p){return p>=75?'var(--green)':p>=55?'var(--accent)':p>=35?'var(--yellow)':'var(--red)';}
+function sessionPct(sess){ // avg velo+ivb percentile across arsenal, weighted by usage
+  let tot=0,w=0;
+  for(const k in sess.types){const t=sess.types[k];const m=PITCH[k].mlb;
+    const pv=pct(t.velo,m.velo[0],m.velo[1]);
+    const pi=pctAbs(t.ivb,m.ivb[0],m.ivb[1]);
+    const pe=pct(t.eff,m.eff[0],m.eff[1]);
+    tot+=(pv*.5+pi*.3+pe*.2)*t.count; w+=t.count;}
+  return Math.round(tot/w);
+}
+function gradeFromPct(p){return p>=72?['A','grade-a']:p>=58?['B','grade-b']:p>=42?['C','grade-c']:['D','grade-d'];}
+function avgVelo(sess){let t=0,w=0;for(const k in sess.types){t+=sess.types[k].velo*sess.types[k].count;w+=sess.types[k].count;}return(t/w).toFixed(1);}
+function topVelo(sess){return Math.max(...Object.values(sess.types).flatMap(t=>t.pitches.map(p=>p.velo))).toFixed(1);}
+const MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+function fdate(iso){const d=new Date(iso+'T12:00');return{m:MON[d.getMonth()],day:d.getDate(),full:d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})};}
+
+/* ── DASHBOARD ───────────────────────────────────────────── */
+function renderDashboard(){
+  const S=STATE.sessions; const p=STATE.player;
+  if(!S||S.length===0){
+    $('pg-dashboard').innerHTML=`
+      <div class="page-head"><h1>Welcome, ${p.name.split(' ')[0]}</h1>
+        <p>${p.throws==='L'?'LHP':'RHP'} · ${p.pos||'SP'}${p.team?' · '+p.team:''}</p></div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;text-align:center;gap:16px">
+        <div style="font-size:48px;opacity:.15">⚾</div>
+        <div style="font-size:18px;font-weight:800;color:var(--text)">No sessions yet</div>
+        <div style="font-size:13px;color:var(--muted);max-width:340px;line-height:1.6">
+          Sessions will appear here automatically once the facility Rapsodo unit is connected and synced to your account.</div>
+      </div>`;
+    return;
+  }
+  const allTop=Math.max(...S.flatMap(s=>+topVelo(s)));
+  const totalP=S.reduce((a,s)=>a+s.count,0);
+  const latest=S[0]; const lp=sessionPct(latest); const [lg]=gradeFromPct(lp);
+  // arsenal aggregate across all sessions
+  const ars={};
+  S.forEach(s=>{for(const k in s.types){const t=s.types[k];
+    if(!ars[k])ars[k]={n:0,velo:0,ivb:0,eff:0};
+    ars[k].n+=t.count;ars[k].velo+=t.velo*t.count;ars[k].ivb+=t.ivb*t.count;ars[k].eff+=t.eff*t.count;}});
+  let arsHtml='';
+  for(const k of Object.keys(PITCH)){if(!ars[k])continue;const a=ars[k];const m=PITCH[k].mlb;
+    const velo=(a.velo/a.n),ivb=(a.ivb/a.n),eff=(a.eff/a.n);
+    const pv=pct(velo,m.velo[0],m.velo[1]);
+    arsHtml+=`<div class="type-section">
+      <div class="ts-head"><span class="ts-dot" style="background:${PITCH[k].col}"></span>
+        <span class="ts-name">${PITCH[k].name}</span>
+        <span class="ts-count">${a.n} pitches</span>
+        <span class="ts-usage">${Math.round(a.n/totalP*100)}%</span></div>
+      <div class="ts-nums">
+        <div class="tsn"><div class="v">${velo.toFixed(1)}</div><div class="l">VELO</div></div>
+        <div class="tsn"><div class="v">${ivb.toFixed(1)}"</div><div class="l">IVB</div></div>
+        <div class="tsn"><div class="v">${eff.toFixed(0)}%</div><div class="l">SPIN EFF</div></div>
+        <div class="tsn"><div class="v pct-${pctClass(pv)}">${pv}</div><div class="l">VELO PCTL</div></div>
+      </div>
+      ${pbar('Velocity',velo.toFixed(1),pct(velo,m.velo[0],m.velo[1]))}
+      ${pbar('IVB',ivb.toFixed(1)+'"',pctAbs(ivb,m.ivb[0],m.ivb[1]))}
+      ${pbar('Spin Eff',eff.toFixed(0)+'%',pct(eff,m.eff[0],m.eff[1]))}
+    </div>`;}
+  $('pg-dashboard').innerHTML=`
+    <div class="page-head"><h1>Welcome back, ${p.name.split(' ')[0]}</h1>
+      <p>${p.throws==='L'?'LHP':'RHP'} · ${p.pos} · ${p.team} · ${S.length} sessions logged</p></div>
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
+      <div class="stat-cell"><div class="sv">${allTop}</div><div class="sl">TOP VELO</div></div>
+      <div class="stat-cell"><div class="sv">${totalP}</div><div class="sl">TOTAL PITCHES</div></div>
+      <div class="stat-cell"><div class="sv">${Object.keys(ars).length}</div><div class="sl">PITCH TYPES</div></div>
+      <div class="stat-cell"><div class="sv" style="color:${pctColor(lp)}">${lg}</div><div class="sl">LATEST GRADE</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:18px;align-items:start">
+      <div>
+        <div class="sec-head"><h2>RECENT SESSIONS</h2><span class="sec-link" onclick="nav('sessions')">View all →</span></div>
+        ${S.slice(0,4).map(sessionCard).join('')}
+      </div>
+      <div class="card"><h4>ARSENAL VS MLB</h4>${arsHtml}</div>
+    </div>`;
+}
+function pbar(lbl,val,p){
+  return `<div class="pbar-row"><div class="pbar-lbl">${lbl}</div>
+    <div class="pbar-track"><div class="pbar-p25"></div><div class="pbar-p75"></div>
+      <div class="pbar-fill" style="width:${p}%;background:${pctColor(p)}"></div></div>
+    <div class="pbar-val">${val}</div><div class="pbar-pct pct-${pctClass(p)}">${p}</div></div>`;
+}
+
+/* ── SESSIONS LIST ───────────────────────────────────────── */
+function sessionCard(s){
+  const d=fdate(s.date); const pp=sessionPct(s); const [g,gc]=gradeFromPct(pp);
+  const pills=Object.keys(s.types).map(k=>
+    `<span class="pill" style="background:${PITCH[k].col}22;color:${PITCH[k].col}">${k}</span>`).join('');
+  return `<div class="sc" onclick="openSession('${s.id}')">
+    <div class="sc-date"><div class="sc-month">${d.m}</div><div class="sc-day">${d.day}</div></div>
+    <div class="sc-div"></div>
+    <div class="sc-info"><div class="sc-title">${s.title}</div>
+      <div class="sc-meta">${s.count} pitches · top ${topVelo(s)} mph</div>
+      <div class="sc-pills">${pills}</div></div>
+    <div class="sc-nums"><div class="sc-num"><strong>${avgVelo(s)}</strong>AVG V</div></div>
+    <div class="sc-grade ${gc}">${g}</div></div>`;
+}
+function renderSessions(){
+  $('pg-sessions').innerHTML=`<div class="page-head"><h1>Sessions</h1>
+    <p>${STATE.sessions.length} logged · tap any to break it down</p></div>
+    ${STATE.sessions.map(sessionCard).join('')}`;
+}
+
+/* ── SESSION DETAIL ──────────────────────────────────────── */
+function openSession(id){STATE.cur=STATE.sessions.find(s=>s.id===id);STATE.selPitch=1;STATE.pitchFilter='all';nav('session');renderSession('overview');}
+function renderSession(tab){
+  STATE.sessTab=tab;
+  const s=STATE.cur; const d=fdate(s.date); const pp=sessionPct(s); const [g,gc]=gradeFromPct(pp);
+  const top=topVelo(s); const av=avgVelo(s);
+  let body='';
+  if(tab==='overview')body=sessTabOverview(s);
+  else if(tab==='pitches')body=sessTabPitches(s);
+  else if(tab==='percentiles')body=sessTabPctl(s);
+  else if(tab==='debrief')body=sessTabDebrief(s,pp);
+  else if(tab==='video')body=sessTabVideo(s);
+  else if(tab==='notes')body=sessTabNotes(s);
+  $('pg-session').innerHTML=`
+    <button class="back-btn" onclick="nav('sessions')">‹ Back to sessions</button>
+    <div class="sdh"><div class="sdh-top">
+      <div class="sdh-grade ${gc}"><span class="gl">${g}</span><span class="gs">${pp} PCTL</span></div>
+      <div class="sdh-info"><h2>${s.title}</h2><p>${d.full} · ${s.count} pitches</p></div>
+      <div class="sdh-acts">
+        <button class="act-btn" onclick="window.print()">Export PDF</button>
+        <button class="act-btn accent" onclick="openShare()">Share</button></div>
+    </div>
+    <div class="sdh-stats">
+      <div class="sdhs"><div class="v">${top}</div><div class="l">TOP VELO</div></div>
+      <div class="sdhs"><div class="v">${av}</div><div class="l">AVG VELO</div></div>
+      <div class="sdhs"><div class="v">${Object.keys(s.types).length}</div><div class="l">PITCH TYPES</div></div>
+      <div class="sdhs"><div class="v">${s.count}</div><div class="l">PITCHES</div></div>
+      <div class="sdhs"><div class="v" style="color:${pctColor(pp)}">${pp}</div><div class="l">SESSION PCTL</div></div>
+    </div></div>
+    <div class="detail-tabs">
+      ${['overview','pitches','percentiles','debrief','video','notes'].map(t=>
+        `<div class="dtab ${t===tab?'on':''}" onclick="renderSession('${t}')">${({overview:'Overview',pitches:'Pitch Log',percentiles:'Vs MLB',debrief:'AI Debrief',video:'Delivery',notes:'Notes'})[t]}</div>`).join('')}
+    </div>${body}`;
+}
+function sessTabOverview(s){
+  let rows='';
+  for(const k in s.types){const t=s.types[k];
+    rows+=`<div class="card"><h4 style="color:${PITCH[k].col}">${PITCH[k].name.toUpperCase()} · ${t.count} thrown</h4>
+      <div class="ts-nums" style="grid-template-columns:repeat(4,1fr)">
+        <div class="tsn"><div class="v">${t.velo}</div><div class="l">VELO</div></div>
+        <div class="tsn"><div class="v">${t.spin}</div><div class="l">SPIN</div></div>
+        <div class="tsn"><div class="v">${t.eff}%</div><div class="l">EFF</div></div>
+        <div class="tsn"><div class="v">${t.tilt}</div><div class="l">TILT</div></div>
+        <div class="tsn"><div class="v">${t.ivb}"</div><div class="l">IVB</div></div>
+        <div class="tsn"><div class="v">${t.hb}"</div><div class="l">HB</div></div>
+        <div class="tsn"><div class="v">${t.ext}'</div><div class="l">EXT</div></div>
+        <div class="tsn"><div class="v">${Math.round(t.count/s.count*100)}%</div><div class="l">USAGE</div></div>
+      </div></div>`;}
+  return `<div class="detail-grid">${rows}</div>`;
+}
+function sessTabPctl(s){
+  let html='';
+  for(const k in s.types){const t=s.types[k];const m=PITCH[k].mlb;
+    html+=`<div class="type-section">
+      <div class="ts-head"><span class="ts-dot" style="background:${PITCH[k].col}"></span>
+        <span class="ts-name">${PITCH[k].name}</span><span class="ts-count">${t.count} thrown</span></div>
+      ${pbar('Velocity',t.velo,pct(t.velo,m.velo[0],m.velo[1]))}
+      ${pbar('Spin',t.spin,pct(t.spin,m.spin[0],m.spin[1]))}
+      ${pbar('Spin Eff',t.eff+'%',pct(t.eff,m.eff[0],m.eff[1]))}
+      ${pbar('IVB',t.ivb+'"',pctAbs(t.ivb,m.ivb[0],m.ivb[1]))}
+      ${pbar('H-Break',t.hb+'"',pctAbs(t.hb,m.hb[0],m.hb[1]))}
+      ${pbar('Extension',t.ext+"'",pct(t.ext,m.ext[0],m.ext[1]))}
+    </div>`;}
+  return `<div class="card"><h4>EACH PITCH VS MLB (10th–90th PERCENTILE BAND)</h4>${html}</div>`;
+}
+function sessTabDebrief(s,pp){
+  // pick strongest + weakest metric across arsenal
+  const items=[];
+  for(const k in s.types){const t=s.types[k];const m=PITCH[k].mlb;
+    items.push({k,metric:'velo',label:`${PITCH[k].name} velocity`,p:pct(t.velo,m.velo[0],m.velo[1]),v:t.velo+' mph'});
+    items.push({k,metric:'ivb',label:`${PITCH[k].name} IVB`,p:pctAbs(t.ivb,m.ivb[0],m.ivb[1]),v:t.ivb+'"'});
+    items.push({k,metric:'eff',label:`${PITCH[k].name} spin efficiency`,p:pct(t.eff,m.eff[0],m.eff[1]),v:t.eff+'%'});}
+  items.sort((a,b)=>b.p-a.p);
+  const strengths=items.slice(0,3),focus=items.slice(-2);
+  const topType=Object.entries(s.types).sort((a,b)=>b[1].count-a[1].count)[0];
+  return `<div class="debrief">
+    <div class="debrief-head"><div class="debrief-icon">🧠</div>
+      <h3>AI SESSION DEBRIEF</h3><span>auto-generated</span></div>
+    <div class="debrief-section"><div class="ds-title">SUMMARY</div>
+      <p>This session graded in the <strong>${pp}th percentile</strong> against MLB pitchers. You leaned on your ${PITCH[topType[0]].name.toLowerCase()} (${Math.round(topType[1].count/s.count*100)}% usage) and your top end touched <strong>${topVelo(s)} mph</strong>. Overall shape held consistent across the outing.</p></div>
+    <div class="debrief-section"><div class="ds-title">WHAT'S WORKING</div><ul>
+      ${strengths.map(i=>`<li class="good">${i.label} sitting ${i.v} — ${i.p}th pctl${i.p>=75?', elite range':''}.</li>`).join('')}
+    </ul></div>
+    <div class="debrief-section"><div class="ds-title">FOCUS NEXT</div><ul>
+      ${focus.map(i=>`<li class="flag">${i.label} at ${i.v} (${i.p}th pctl) — room to climb. ${i.metric==='eff'?'Cleaner spin axis would tighten it up.':i.metric==='ivb'?'Stay behind the ball through release.':'Build it with intent reps.'}</li>`).join('')}
+    </ul></div></div>`;
+}
+function sessTabVideo(s){
+  return `<div class="card"><h4>OPTITRACK DELIVERY — 3D SKELETON</h4>
+    <div class="video-ph"><div class="vpi">🎥</div><h3>Orbitable 3D Delivery (placeholder)</h3>
+      <p>When the Motive NatNet bridge is wired up, this becomes a full-body skeleton you can spin to any angle, synced to each pitch. The 7 grayscale reference clips toggle below.</p></div>
+    <div class="video-grid" style="margin-top:10px">
+      ${[1,2,3,4,5,6,7].map(n=>`<div class="video-cell">CAM ${n}</div>`).join('')}
+      <div class="video-cell">3D</div></div></div>`;
+}
+function sessTabNotes(s){
+  return `<div class="detail-grid">
+    <div class="card"><h4>YOUR NOTES</h4>
+      <textarea class="notes-area" id="note-area" placeholder="How'd it feel? What were you working on?">${s.notes||''}</textarea>
+      <button class="notes-save" onclick="saveNote()">Save Notes</button></div>
+    <div class="card"><h4>COACH NOTE</h4>
+      ${s.coachNote?`<div class="coach-note">"${s.coachNote}"</div>`:'<div class="empty" style="padding:30px"><p>No coach note for this session yet.</p></div>'}</div>
+  </div>`;
+}
+function saveNote(){STATE.cur.notes=$('note-area').value;toast('Notes saved');}
+
+/* ── PITCH LOG (thrown order) + per-pitch detail ─────────── */
+function visibleLog(s){return STATE.pitchFilter==='all'?s.log:s.log.filter(p=>p.type===STATE.pitchFilter);}
+function chipCss(on,col){col=col||'var(--accent)';return `padding:5px 10px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer;border:1px solid ${on?col:'var(--b2)'};background:${on?col+'22':'var(--s2)'};color:${on?col:'var(--muted)'}`;}
+function setPitchFilter(t){STATE.pitchFilter=t;const s=STATE.cur;const vis=visibleLog(s);
+  if(vis.length&&!vis.some(p=>p.seq===STATE.selPitch))STATE.selPitch=vis[0].seq;renderSession('pitches');}
+function stepPitch(dir){const s=STATE.cur;if(!s)return;const vis=visibleLog(s);if(!vis.length)return;
+  let i=vis.findIndex(p=>p.seq===STATE.selPitch);i=i<0?0:Math.max(0,Math.min(vis.length-1,i+dir));
+  STATE.selPitch=vis[i].seq;renderSession('pitches');}
+function sessTabPitches(s){
+  if(!STATE.selPitch||STATE.selPitch>s.log.length)STATE.selPitch=1;
+  const live=s.kind==='liveab';
+  const vis=visibleLog(s);
+  if(vis.length&&!vis.some(p=>p.seq===STATE.selPitch))STATE.selPitch=vis[0].seq;
+  const sel=s.log.find(p=>p.seq===STATE.selPitch)||s.log[0];
+  const typesPresent=[...new Set(s.log.map(p=>p.type))];
+  const filterChips=`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">
+    <button onclick="setPitchFilter('all')" style="${chipCss(STATE.pitchFilter==='all')}">All ${s.log.length}</button>
+    ${typesPresent.map(k=>`<button onclick="setPitchFilter('${k}')" style="${chipCss(STATE.pitchFilter===k,PITCH[k].col)}">${k} ${s.log.filter(p=>p.type===k).length}</button>`).join('')}
+  </div>`;
+  const rows=vis.map(p=>{
+    const right = live&&p.result
+      ? `<span class="pill" style="background:${p.result.col}22;color:${p.result.col};white-space:nowrap">${p.result.lbl}</span>`
+      : `<span style="font-size:10px;color:var(--dim);font-weight:700">${p.iz?'in zone':'—'}</span>`;
+    return `
+    <div class="sc" style="padding:9px 12px;margin-bottom:6px;gap:11px;${p.seq===sel.seq?'border-color:var(--accent);background:var(--s2)':''}" onclick="selectPitch(${p.seq})">
+      <div style="width:24px;text-align:center;font-weight:900;color:var(--muted);font-size:13px">${p.seq}</div>
+      <span class="ts-dot" style="background:${PITCH[p.type].col};flex:0 0 auto"></span>
+      <div style="flex:1"><div style="font-size:13px;font-weight:800">${PITCH[p.type].name}${p.corrected?' <span title="reclassified" style="color:var(--accent);font-size:10px">✎</span>':''}</div>
+        <div style="font-size:10px;color:var(--muted);font-weight:600">${p.velo} mph · ${p.ivb}" IVB · ${p.hb}" HB</div></div>
+      ${right}
+    </div>`;}).join('');
+  const zoneTag = sel.result
+    ? `<span class="pill" style="background:${sel.result.col}22;color:${sel.result.col};font-size:12px;padding:4px 12px">${sel.result.lbl} · ${sel.iz?'IN ZONE':'OUT'}</span>`
+    : `<span class="pill" style="background:var(--s2);color:var(--muted);font-size:12px;padding:4px 12px">${sel.iz?'IN ZONE':'OUT OF ZONE'}</span>`;
+  return `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px;align-items:start">
+      <div class="card"><h4>PITCH SEQUENCE — ${s.log.length} THROWN · TAP · ← → KEYS</h4>
+        ${filterChips}
+        <div style="max-height:440px;overflow-y:auto;padding-right:4px">${rows}</div></div>
+      <div class="card"><h4>LOCATION · CATCHER'S VIEW — #${sel.seq}</h4>
+        ${strikeZoneSVG(sel)}
+        <div style="display:flex;justify-content:center;gap:14px;margin-top:10px;font-size:9px;color:var(--muted);font-weight:700">
+          <span><span style="display:inline-block;width:14px;border-top:3px solid ${PITCH[sel.type].col};vertical-align:middle"></span> actual</span>
+          <span><span style="display:inline-block;width:14px;border-top:2px dashed var(--dim);vertical-align:middle"></span> no-spin</span></div>
+        <div style="text-align:center;margin-top:10px">${zoneTag}</div>
+      </div>
+      <div class="card"><h4>OPTITRACK DELIVERY — #${sel.seq}</h4>${optitrackHTML(sel)}</div>
+    </div>
+    <div class="card" style="margin-top:14px"><h4 style="color:${PITCH[sel.type].col}">PITCH #${sel.seq} — ${PITCH[sel.type].name.toUpperCase()} · FULL SPECS</h4>
+      ${pitchSpecsHTML(sel)}</div>
+    <div class="card" style="margin-top:14px">
+      <h4>CLASSIFICATION &amp; TAGGING — PITCH #${sel.seq}</h4>
+      <div style="font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.04em;margin-bottom:7px">
+        PITCH TYPE ${sel.corrected
+          ?`<span style="color:var(--accent)">· corrected (Rapsodo auto: ${PITCH[sel.typeAuto].name})</span>`
+          :`<span style="color:var(--dim)">· auto-classified by Rapsodo — tap to correct</span>`}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:${live?'16px':'4px'}">
+        ${Object.keys(PITCH).map(k=>{const on=k===sel.type;return `<button onclick="setPitchType(${sel.seq},'${k}')" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:800;border:1px solid ${on?PITCH[k].col:'var(--b2)'};background:${on?PITCH[k].col+'22':'var(--s2)'};color:${on?PITCH[k].col:'var(--muted)'}">${PITCH[k].name}</button>`;}).join('')}
+      </div>
+      ${live
+        ? `<div style="font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.04em;margin-bottom:7px">OUTCOME · tap to log the hitter result</div>
+           <div style="display:flex;gap:6px;flex-wrap:wrap">
+             ${OUTCOMES.map(o=>{const on=sel.result&&sel.result.k===o.k;return `<button onclick="setOutcome(${sel.seq},'${o.k}')" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:800;border:1px solid ${on?o.col:'var(--b2)'};background:${on?o.col+'22':'var(--s2)'};color:${on?o.col:'var(--muted)'}">${o.lbl}</button>`;}).join('')}
+           </div>`
+        : `<div class="coach-note" style="font-style:normal;margin-top:10px">Outcome tracking is off for <strong>${KINDS[s.kind]}</strong> sessions — pure ball-flight only. Hitter results (swing &amp; miss, hit, called strike…) only appear on <strong>Live AB</strong> sessions.</div>`}
+    </div>`;
+}
+function selectPitch(seq){STATE.selPitch=seq;renderSession('pitches');}
+function setPitchType(seq,type){
+  const p=STATE.cur.log.find(x=>x.seq===seq); if(!p)return;
+  p.type=type; p.corrected=(type!==p.typeAuto);
+  recomputeTypes(STATE.cur); renderSession('pitches');
+  toast(p.corrected?('Reclassified → '+PITCH[type].name):('Restored auto → '+PITCH[type].name));
+}
+function setOutcome(seq,k){
+  const p=STATE.cur.log.find(x=>x.seq===seq); if(!p)return;
+  p.result=OUT_BY_K[k]; renderSession('pitches'); toast('Logged: '+p.result.lbl);
+}
+
+function pitchSpecsHTML(p){
+  const cell=(v,l)=>`<div class="tsn"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+  return `<div class="ts-nums" style="grid-template-columns:repeat(4,1fr)">
+    ${cell(p.velo,'VELO MPH')}${cell(p.spin,'SPIN RPM')}${cell(p.eff+'%','SPIN EFF')}${cell(TILT[p.type],'TILT')}
+    ${cell(p.ivb+'"','IVB')}${cell(p.hb+'"','H-BREAK')}${cell(p.ext+"'",'EXTENSION')}${cell(p.iz?'YES':'NO','IN ZONE')}</div>`;
+}
+function optitrackHTML(p){
+  return `${skeletonSVG(p)}
+    <div style="text-align:center;font-size:9px;color:var(--muted);font-weight:700;margin:8px 0 6px">
+      ▸ 3D skeleton · drag-to-orbit goes live once the Motive NatNet bridge is up</div>
+    <div class="video-grid" style="grid-template-columns:repeat(4,1fr);gap:5px">
+      ${[1,2,3,4,5,6,7].map(n=>`<div class="video-cell" style="font-size:8px">CAM ${n}</div>`).join('')}
+      <div class="video-cell" style="font-size:8px;color:var(--accent);border:1px solid rgba(242,103,34,.3)">▸ 3D</div></div>`;
+}
+/* Offline placeholder: a pitcher skeleton in release pose (mirrors for LHP).
+   Replaced by the live orbitable Motive skeleton when the bridge is wired. */
+function skeletonSVG(p){
+  const lhp=STATE.player&&STATE.player.throws==='L';
+  const col=PITCH[p.type].col;
+  // joints (RHP release pose), feet planted toward plate
+  const J={head:[118,40],sMid:[116,63],sThrow:[135,58],sGlove:[101,67],
+    eThrow:[154,44],hThrow:[151,22],eGlove:[88,84],hGlove:[99,97],
+    hipMid:[110,112],hipBack:[125,115],hipFront:[97,110],
+    kFront:[85,150],fFront:[89,189],kBack:[142,150],fBack:[165,176]};
+  const L=(a,b,w=4)=>`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${col}" stroke-width="${w}" stroke-linecap="round"/>`;
+  const D=(a,r=2.6)=>`<circle cx="${a[0]}" cy="${a[1]}" r="${r}" fill="#fff"/>`;
+  const bones=
+    L(J.sMid,J.hipMid)+L(J.sGlove,J.sThrow)+
+    L(J.sThrow,J.eThrow)+L(J.eThrow,J.hThrow)+
+    L(J.sGlove,J.eGlove)+L(J.eGlove,J.hGlove)+
+    L(J.hipFront,J.hipBack)+L(J.hipMid,J.hipFront,3.5)+L(J.hipMid,J.hipBack,3.5)+
+    L(J.hipFront,J.kFront)+L(J.kFront,J.fFront)+
+    L(J.hipBack,J.kBack)+L(J.kBack,J.fBack);
+  const joints=Object.values(J).map(j=>D(j)).join('');
+  const inner=`
+    <ellipse cx="120" cy="193" rx="58" ry="7" fill="rgba(0,0,0,.45)"/>
+    ${[176,184,191].map((y,i)=>`<line x1="${40+i*6}" y1="${y}" x2="${200-i*6}" y2="${y}" stroke="var(--b1)" stroke-width="1"/>`).join('')}
+    ${bones}
+    <circle cx="${J.head[0]}" cy="${J.head[1]}" r="11" fill="none" stroke="${col}" stroke-width="3.5"/>
+    ${joints}
+    <circle cx="${J.hThrow[0]+2}" cy="${J.hThrow[1]-4}" r="4.5" fill="#fff"/>
+    <circle cx="${J.hThrow[0]+2}" cy="${J.hThrow[1]-4}" r="4.5" fill="none" stroke="${col}" stroke-width="1"/>`;
+  return `<svg viewBox="0 0 200 205" style="width:100%;max-width:230px;height:auto;display:block;margin:0 auto;background:#0c0e15;border-radius:10px;border:1px solid var(--b1)">
+    ${lhp?`<g transform="translate(200,0) scale(-1,1)">${inner}</g>`:inner}
+    <text x="8" y="16" fill="var(--muted)" font-size="8" font-weight="700">${lhp?'LHP':'RHP'} · RELEASE</text>
+  </svg>`;
+}
+
+/* ── Trackman-style strike zone w/ break path into the zone ─ */
+function strikeZoneSVG(p){
+  const W=240,H=300, X0=-2.0,X1=2.0, Y0=0,Y1=5;   // feet domain
+  const sx=ft=>((ft-X0)/(X1-X0))*W;
+  const sy=ft=>H-((ft-Y0)/(Y1-Y0))*H;
+  const zx1=sx(-0.708),zx2=sx(0.708),zy1=sy(3.5),zy2=sy(1.5);
+  const col=PITCH[p.type].col;
+  // no-spin landing = actual minus spin-induced movement (inches→feet)
+  const nx=p.px-p.hb/12, ny=p.pz-p.ivb/12;
+  const ex=sx(p.px-p.hb/9), ey=sy(4.7);            // entry near top of frame
+  const lx=sx(p.px), ly=sy(p.pz);                  // actual plate location
+  const cx=sx(p.px-p.hb/16), cy=(ey+ly)/2;         // control pt → curved path
+  const zone3=[1,2].map(i=>`
+    <line x1="${zx1+(zx2-zx1)*i/3}" y1="${zy1}" x2="${zx1+(zx2-zx1)*i/3}" y2="${zy2}" stroke="var(--b1)" stroke-width="1"/>
+    <line x1="${zx1}" y1="${zy1+(zy2-zy1)*i/3}" x2="${zx2}" y2="${zy1+(zy2-zy1)*i/3}" stroke="var(--b1)" stroke-width="1"/>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:230px;height:auto;display:block;margin:0 auto">
+    <rect x="${zx1}" y="${zy1}" width="${zx2-zx1}" height="${zy2-zy1}" fill="rgba(255,255,255,.03)" stroke="var(--b2)" stroke-width="1.5"/>
+    ${zone3}
+    <polygon points="${sx(-0.708)},${sy(0.4)} ${sx(0.708)},${sy(0.4)} ${sx(0.708)},${sy(0.25)} ${sx(0)},${sy(0.08)} ${sx(-0.708)},${sy(0.25)}" fill="var(--s3)" stroke="var(--b2)" stroke-width="1"/>
+    <line x1="${ex}" y1="${ey}" x2="${sx(nx)}" y2="${sy(ny)}" stroke="var(--dim)" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <circle cx="${sx(nx)}" cy="${sy(ny)}" r="3.5" fill="none" stroke="var(--dim)" stroke-width="1.5"/>
+    <path d="M${ex} ${ey} Q${cx} ${cy} ${lx} ${ly}" fill="none" stroke="${col}" stroke-width="3" stroke-linecap="round" opacity=".92"/>
+    <circle cx="${lx}" cy="${ly}" r="8" fill="${col}"/>
+    <circle cx="${lx}" cy="${ly}" r="8" fill="none" stroke="#fff" stroke-width="1.5" opacity=".55"/>
+  </svg>`;
+}
+
+/* ── ANALYZE (career trends, inline SVG) ─────────────────── */
+function renderAnalyze(){
+  const S=[...STATE.sessions].reverse(); // oldest→newest for trend
+  const types=Object.keys(ARSENAL);
+  const series=types.map(k=>({name:PITCH[k].name,col:PITCH[k].col,
+    pts:S.map((s,i)=>({x:i,y:s.types[k]?s.types[k].velo:null}))}));
+  const legend=types.map(k=>`<div class="tl-item"><span class="tl-dot" style="background:${PITCH[k].col}"></span>${PITCH[k].name}</div>`).join('');
+  // usage mix bars (latest session)
+  const latest=STATE.sessions[0];
+  let usage='';
+  for(const k in latest.types){const pc=Math.round(latest.types[k].count/latest.count*100);
+    usage+=`<div class="pbar-row"><div class="pbar-lbl">${PITCH[k].name}</div>
+      <div class="pbar-track"><div class="pbar-fill" style="width:${pc}%;background:${PITCH[k].col}"></div></div>
+      <div class="pbar-pct">${pc}%</div></div>`;}
+  $('pg-analyze').innerHTML=`<div class="page-head"><h1>Analyze</h1><p>Trends across your ${S.length} sessions</p></div>
+    <div class="arc-card"><h4>VELOCITY TREND BY PITCH</h4>
+      <div class="trend-legend">${legend}</div>${lineChart(series,76,96)}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="arc-card"><h4>ARSENAL MIX — LATEST</h4>${usage}</div>
+      <div class="arc-card"><h4>SESSION GRADE TREND</h4>${lineChart(
+        [{name:'Grade pctl',col:'#f26722',pts:S.map((s,i)=>({x:i,y:sessionPct(s)}))}],20,100)}</div>
+    </div>`;
+}
+function lineChart(series,ymin,ymax){
+  const W=560,H=200,pad=30,n=series[0].pts.length;
+  const xx=i=>pad+i*(W-pad*2)/Math.max(1,n-1);
+  const yy=v=>H-pad-(v-ymin)/(ymax-ymin)*(H-pad*2);
+  let grid='';for(let g=0;g<=4;g++){const y=pad+g*(H-pad*2)/4;const val=Math.round(ymax-(ymax-ymin)*g/4);
+    grid+=`<line x1="${pad}" y1="${y}" x2="${W-pad}" y2="${y}" stroke="#242836" stroke-width="1"/>
+      <text x="${pad-6}" y="${y+3}" fill="#6b7585" font-size="9" text-anchor="end">${val}</text>`;}
+  let lines='';
+  series.forEach(s=>{const pts=s.pts.filter(p=>p.y!=null);
+    const dpath=pts.map((p,i)=>`${i?'L':'M'}${xx(p.x).toFixed(1)} ${yy(p.y).toFixed(1)}`).join(' ');
+    lines+=`<path d="${dpath}" fill="none" stroke="${s.col}" stroke-width="2.5" stroke-linejoin="round"/>`;
+    lines+=pts.map(p=>`<circle cx="${xx(p.x).toFixed(1)}" cy="${yy(p.y).toFixed(1)}" r="3" fill="${s.col}"/>`).join('');});
+  let xl='';for(let i=0;i<n;i++){xl+=`<text x="${xx(i)}" y="${H-8}" fill="#6b7585" font-size="9" text-anchor="middle">S${i+1}</text>`;}
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">${grid}${lines}${xl}</svg>`;
+}
+
+/* ── COMPARE ─────────────────────────────────────────────── */
+function renderCompare(){
+  const S=STATE.sessions;
+  const opts=S.map((s,i)=>`<option value="${s.id}">${fdate(s.date).m} ${fdate(s.date).day} — ${s.title}</option>`).join('');
+  $('pg-compare').innerHTML=`<div class="page-head"><h1>Compare</h1><p>Stack any two sessions side by side</p></div>
+    <div class="cmp-sels">
+      <div class="cmp-sel-wrap"><label>SESSION A</label><select class="cmp-sel" id="cmp-a" onchange="drawCompare()">${opts}</select></div>
+      <div class="cmp-sel-wrap"><label>SESSION B</label><select class="cmp-sel" id="cmp-b" onchange="drawCompare()">${opts}</select></div>
+    </div><div id="cmp-out"></div>`;
+  $('cmp-a').selectedIndex=0; $('cmp-b').selectedIndex=Math.min(2,S.length-1);
+  drawCompare();
+}
+function drawCompare(){
+  const A=STATE.sessions.find(s=>s.id===$('cmp-a').value);
+  const B=STATE.sessions.find(s=>s.id===$('cmp-b').value);
+  const row=(lbl,a,b,suf='')=>{const d=(a-b);const cls=Math.abs(d)<0.05?'neu':d>0?'pos':'neg';
+    return `<div class="cmp-stat-row"><span class="cmp-lbl">${lbl}</span>
+      <span class="cmp-a">${a}${suf}</span><span class="cmp-b">${b}${suf}</span>
+      <span class="cmp-d ${cls}">${d>0?'+':''}${d.toFixed(1)}</span></div>`;};
+  const types=[...new Set([...Object.keys(A.types),...Object.keys(B.types)])];
+  let cards='';
+  cards+=`<div class="card"><h4>OVERALL</h4>
+    ${row('Avg velo',+avgVelo(A),+avgVelo(B))}
+    ${row('Top velo',+topVelo(A),+topVelo(B))}
+    ${row('Session pctl',sessionPct(A),sessionPct(B))}
+    ${row('Pitches',A.count,B.count)}</div>`;
+  types.forEach(k=>{if(!A.types[k]||!B.types[k])return;const a=A.types[k],b=B.types[k];
+    cards+=`<div class="card"><h4 style="color:${PITCH[k].col}">${PITCH[k].name.toUpperCase()}</h4>
+      ${row('Velo',a.velo,b.velo)}${row('Spin',a.spin,b.spin)}
+      ${row('Eff',a.eff,b.eff,'%')}${row('IVB',a.ivb,b.ivb,'"')}${row('HB',a.hb,b.hb,'"')}</div>`;});
+  $('cmp-out').innerHTML=`<div class="cmp-legend">
+    <div class="cmp-leg"><span class="cmp-leg-dot" style="background:var(--accent)"></span>${fdate(A.date).m} ${fdate(A.date).day}</div>
+    <div class="cmp-leg"><span class="cmp-leg-dot" style="background:var(--blue)"></span>${fdate(B.date).m} ${fdate(B.date).day}</div>
+    <span style="font-size:11px;color:var(--muted)">Δ = A minus B</span></div>
+    <div class="cmp-grid">${cards}</div>`;
+}
+
+/* ── SETTINGS ────────────────────────────────────────────── */
+function renderSettings(){
+  $('set-name').value=STATE.player.name;
+  $('set-team').value=STATE.player.team;
+  $('set-api').value=STATE.apiUrl;
+}
+function saveApiUrl(){
+  const url=$('set-api').value.trim().replace(/\/$/,'');
+  STATE.apiUrl=url;
+  if(url) localStorage.setItem('tma_apiUrl',url);
+  else localStorage.removeItem('tma_apiUrl');
+  toast(url?'API URL saved — sign in to connect':'Cleared — demo mode');
+  logout();
+}
+function saveProfile(){
+  STATE.player.name=$('set-name').value.trim()||STATE.player.name;
+  STATE.player.team=$('set-team').value.trim()||STATE.player.team;
+  const init=STATE.player.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  $('nav-av').textContent=init; $('nav-nm').textContent=STATE.player.name;
+  toast('Profile updated');
+}
+
+/* ── SHARE + TOAST ───────────────────────────────────────── */
+function openShare(){
+  $('modal-share').classList.remove('hidden');
+  const tok=Math.random().toString(36).slice(2,10);
+  $('share-url-text').textContent=(STATE.apiUrl||'https://tmanalytics.app')+'/share/'+tok;
+}
+function copyShareUrl(){
+  const t=$('share-url-text').textContent;
+  navigator.clipboard&&navigator.clipboard.writeText(t).catch(()=>{});
+  toast('Link copied'); $('modal-share').classList.add('hidden');
+}
+let _tt;
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),1900);}
+
+/* ── Boot ────────────────────────────────────────────────── */
+(function(){
+  const savedUrl=localStorage.getItem('tma_apiUrl')||'';
+  STATE.apiUrl=savedUrl||'';
+  $('set-api').value=savedUrl||CLOUD_URL;
+  if($('login-api-url'))$('login-api-url').value=savedUrl||'';
+
+  const token=localStorage.getItem('tma_token');
+  if(token&&savedUrl){
+    (async()=>{
+      try{
+        const r=await fetch(`${savedUrl}/me`,{headers:{'Authorization':'Bearer '+token}});
+        if(r.ok){const {player}=await r.json(); await enterAppLive(player,token); return;}
+      }catch(e){}
+      localStorage.removeItem('tma_token');
+    })();
+    return;
+  }
+
+  if(!savedUrl){
+    const card=document.querySelector('.auth-card');
+    const banner=document.createElement('div');
+    banner.style.cssText='background:rgba(242,103,34,.12);border:1px solid rgba(242,103,34,.3);border-radius:10px;padding:10px 12px;margin-bottom:18px;font-size:11px;color:var(--accent);font-weight:700;text-align:center;line-height:1.5';
+    banner.innerHTML='DEMO MODE — no API configured.<br>Sign in with any email to explore with sample data.<br><span style="font-weight:500;opacity:.8">Set your API URL in Settings to go live.</span>';
+    card.insertBefore(banner,card.querySelector('.auth-tabs'));
+  }
+})();
+
+/* Arrow keys step through pitches when the Pitch Log is open */
+document.addEventListener('keydown',e=>{
+  const ps=$('pg-session'); if(!ps||ps.classList.contains('hidden'))return;
+  if(STATE.sessTab!=='pitches')return;
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName||'')))return;
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();stepPitch(1);}
+  else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();stepPitch(-1);}
+});
+</script>
+</body>
+</html>

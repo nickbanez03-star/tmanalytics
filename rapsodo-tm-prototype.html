@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rapsodo · Trackman-style Pitch UI — Prototype</title>
+<style>
+  :root{
+    --bg:#ffffff; --topbar:#1b1b1d; --topbar2:#2a2a2d; --ink:#16181d; --muted:#8a909a;
+    --line:#e6e8ec; --rail:#f6f7f9; --accent:#f26722; --accentdk:#d8551a;
+    --card:#ffffff; --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.1);
+    --4seam:#d83a34; --sinker:#e8973a; --slider:#2f6fd0; --curve:#33a06f; --change:#9aa0aa;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;}
+  .app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+  /* ---------- top bars ---------- */
+  .topbar{height:46px;background:var(--topbar);color:#fff;display:flex;align-items:center;
+    padding:0 10px;gap:10px;flex:0 0 auto}
+  .chip{display:flex;align-items:center;gap:8px;background:#2c2c30;border:1px solid #3a3a40;
+    border-radius:8px;padding:5px 9px;font-size:12px;color:#e9eaee}
+  .chip .bars{display:inline-flex;gap:2px;align-items:flex-end;height:13px}
+  .chip .bars i{width:3px;background:#cfd2d8;display:block}
+  .star{color:#cfd2d8;font-size:15px}
+  .close{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:7px 12px;
+    font-weight:700;font-size:11px;letter-spacing:.06em;cursor:pointer;display:flex;gap:7px;align-items:center}
+  .brand{flex:1;text-align:center}
+  .brand .wm{font-weight:800;letter-spacing:.42em;font-size:18px}
+  .brand .wm b{color:var(--accent)}
+  .brand .ver{font-size:10px;color:#9a9ea6;letter-spacing:.05em;margin-top:1px}
+  .ticons{display:flex;gap:7px;align-items:center}
+  .tbtn{background:#2c2c30;border:1px solid #3a3a40;border-radius:7px;color:#dfe2e7;
+    font-size:11px;font-weight:600;padding:6px 9px;cursor:pointer}
+  .wave{width:120px;height:24px;background:#2c2c30;border:1px solid #3a3a40;border-radius:7px;
+    display:flex;align-items:center;justify-content:center}
+
+  .toolbar{height:44px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;
+    padding:0 12px;gap:14px;flex:0 0 auto}
+  .player{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px}
+  .player .av{width:24px;height:24px;border-radius:50%;background:#e9edf3;
+    display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#5b626e}
+  .toolset{display:flex;gap:16px;align-items:center;margin:0 auto;color:#9aa0aa}
+  .toolset .ti{font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+  .toolset .ti.active{color:var(--accent);font-weight:700}
+  .toolset .ti .ic{font-size:16px;line-height:1}
+  .rtools{display:flex;gap:16px;color:#9aa0aa;font-size:11px}
+  .rtools .ti{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+
+  /* ---------- main grid ---------- */
+  .main{flex:1;display:grid;grid-template-columns:212px 1fr 1.15fr;min-height:0}
+  .rail{background:var(--rail);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+  .railhead{padding:12px 14px 8px}
+  .pc-label{font-size:10px;letter-spacing:.12em;color:var(--muted);font-weight:700}
+  .pc-num{font-size:30px;font-weight:800;line-height:1}
+  .sortsel{margin-top:10px;width:100%;border:1px solid var(--line);background:#fff;border-radius:8px;
+    padding:7px 9px;font-size:12px;color:#3a3f48}
+  .tabs{display:flex;margin:10px 0 0;border-bottom:1px solid var(--line)}
+  .tabs button{flex:1;background:none;border:none;padding:9px 0;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent}
+  .tabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
+  .plist{overflow:auto;flex:1;padding:6px 8px 16px}
+  .pitem{display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:9px;cursor:pointer}
+  .pitem:hover{background:#eef0f3}
+  .pitem.sel{background:#fff;box-shadow:var(--shadow)}
+  .dot{width:13px;height:13px;border-radius:50%;flex:0 0 auto;border:2px solid rgba(0,0,0,.12)}
+  .pitem .v{font-weight:800;font-size:15px}
+  .pitem .n{font-size:11px;color:var(--muted)}
+  .pitem .cam{margin-left:auto;color:#5fbf72;font-size:13px}
+  .pitem.sel .ring{box-shadow:0 0 0 3px rgba(216,58,52,.18)}
+
+  /* center column */
+  .center{overflow:auto;padding:14px 16px;min-height:0}
+  .dialrow{display:flex;gap:16px;align-items:center;margin-bottom:14px}
+  .dial{flex:0 0 150px}
+  .cards{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .mcard{border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:var(--card);box-shadow:var(--shadow)}
+  .mcard .k{font-size:9.5px;letter-spacing:.12em;color:var(--muted);font-weight:800}
+  .mcard .val{font-size:26px;font-weight:800;line-height:1.05;margin-top:3px}
+  .mcard .val small{font-size:12px;color:var(--muted);font-weight:700;margin-left:3px}
+  .mcard.accent .val{color:var(--accent)}
+
+  .plot{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:12px;background:#fff;box-shadow:var(--shadow)}
+  .plot h4{margin:0 0 2px;font-size:10px;letter-spacing:.1em;color:var(--muted);font-weight:800}
+  .plot .sub{font-size:10px;color:#b3b8c0;margin-bottom:6px}
+  .movstats{display:flex;gap:26px;margin:2px 0 4px}
+  .movstats .b{font-size:9px;letter-spacing:.1em;color:var(--muted);font-weight:800}
+  .movstats .b .x{font-size:22px;font-weight:800;color:var(--ink);display:block;line-height:1}
+  .movstats .b.acc .x{color:var(--accent)}
+
+  /* right viewer */
+  .viewer{border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:#0d0f13}
+  .vtop{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#16191f;border-bottom:1px solid #23262d}
+  .vtab{font-size:11px;font-weight:700;color:#aeb4be;background:#23262d;border:1px solid #2f333b;border-radius:7px;padding:6px 11px;cursor:pointer}
+  .vtab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .vspace{flex:1}
+  .vbadge{font-size:10px;color:#7f8794;letter-spacing:.06em}
+  #scene{flex:1;position:relative;min-height:0}
+  #scene canvas{display:block}
+  .vhint{position:absolute;left:10px;bottom:10px;color:#6f7783;font-size:10px;letter-spacing:.04em}
+  .vctrl{position:absolute;right:10px;top:10px;display:flex;gap:6px}
+  .vctrl button{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#dfe3e9;
+    border-radius:7px;font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer;backdrop-filter:blur(4px)}
+  .angles{position:absolute;left:50%;transform:translateX(-50%);bottom:10px;display:flex;gap:6px}
+  .angles button{width:30px;height:30px;border-radius:50%;border:1px solid #33373f;background:#1b1e24;color:#c4c9d1;font-size:11px;font-weight:800;cursor:pointer}
+  .angles button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .refpane{flex:1;display:none;align-items:center;justify-content:center;position:relative;
+    background:repeating-linear-gradient(45deg,#101216,#101216 12px,#0c0e12 12px,#0c0e12 24px)}
+  .refpane.show{display:flex}
+  .refpane .ph{color:#5b626d;text-align:center;font-size:12px;line-height:1.6}
+  .refpane .ph b{color:#8a93a0;display:block;font-size:14px;margin-bottom:4px}
+  .vfoot{display:flex;align-items:center;gap:10px;padding:8px 10px;background:#16191f;border-top:1px solid #23262d;color:#aeb4be}
+  .vfoot .play{width:30px;height:30px;border-radius:50%;background:#23262d;border:1px solid #2f333b;color:#dfe3e9;cursor:pointer;font-size:13px}
+  .scrub{flex:1;height:4px;background:#2a2e35;border-radius:3px;position:relative}
+  .scrub i{position:absolute;left:0;top:0;height:100%;background:var(--accent);border-radius:3px;width:0%}
+  .tagstrip{display:flex;gap:14px;padding:8px 12px;background:#fff;border-top:1px solid var(--line);font-size:11px}
+  .tagstrip .t b{color:var(--muted);font-weight:800;letter-spacing:.08em;font-size:9px;display:block}
+  .tagstrip .t span{color:#3a3f48;font-weight:700}
+  .note{font-size:11px;color:#a7adb6;padding:6px 12px;background:#fff;border-top:1px solid var(--line)}
+  .mock{display:inline-block;background:#fff4ed;color:var(--accentdk);border:1px solid #ffd9c2;border-radius:6px;padding:1px 6px;font-size:9px;font-weight:800;letter-spacing:.06em;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- top bar -->
+  <div class="topbar">
+    <div class="chip"><span class="bars"><i style="height:6px"></i><i style="height:10px"></i><i style="height:13px"></i></span><span id="sessdate">SEP 6 08:58 AM</span></div>
+    <span class="star">★</span>
+    <button class="close">✕ CLOSE SESSION</button>
+    <div class="brand">
+      <div class="wm">RAPSODO<b>·</b>VIEW</div>
+      <div class="ver">prototype 0.1 — Trackman-style layout <span class="mock">MOCK DATA</span></div>
+    </div>
+    <div class="ticons">
+      <button class="tbtn">A‑Z</button>
+      <button class="tbtn">✎ EDIT</button>
+      <div class="wave">〜〜🟠〜</div>
+      <button class="tbtn">≡</button>
+    </div>
+  </div>
+
+  <!-- toolbar -->
+  <div class="toolbar">
+    <div class="player"><span class="av">TD</span> Tristan Davis · RHP ▾</div>
+    <div class="toolset">
+      <div class="ti"><span class="ic">ⓘ</span></div>
+      <div class="ti"><span class="ic">▦</span></div>
+      <div class="ti"><span class="ic">⤴</span></div>
+      <div class="ti active"><span class="ic">◎</span>3D</div>
+      <div class="ti"><span class="ic">☰</span></div>
+      <div class="ti"><span class="ic">⧉</span></div>
+    </div>
+    <div class="rtools">
+      <div class="ti"><span class="ic">✎</span>Draw</div>
+      <div class="ti"><span class="ic">⤴</span>Share</div>
+      <div class="ti"><span class="ic">●</span>All</div>
+      <div class="ti"><span class="ic">#</span>Numbers</div>
+    </div>
+  </div>
+
+  <!-- main -->
+  <div class="main">
+
+    <!-- left rail -->
+    <div class="rail">
+      <div class="railhead">
+        <div class="pc-label">PITCH COUNT</div>
+        <div class="pc-num" id="pcount">0</div>
+        <select class="sortsel" id="sortsel">
+          <option value="seq">Sequence</option>
+          <option value="speed">Pitch speed</option>
+          <option value="type">Pitch type</option>
+        </select>
+        <div class="tabs">
+          <button class="on">Pitch</button>
+          <button>Group</button>
+        </div>
+      </div>
+      <div class="plist" id="plist"></div>
+    </div>
+
+    <!-- center -->
+    <div class="center">
+      <div class="dialrow">
+        <div class="dial"><svg id="dial" viewBox="0 0 150 150" width="150" height="150"></svg></div>
+        <div class="cards">
+          <div class="mcard"><div class="k">PITCH SPEED</div><div class="val" id="m-velo">—<small>mph</small></div></div>
+          <div class="mcard"><div class="k">TILT</div><div class="val" id="m-tilt">—</div></div>
+          <div class="mcard"><div class="k">TOTAL SPIN</div><div class="val" id="m-spin">—<small>rpm</small></div></div>
+          <div class="mcard accent"><div class="k">EFFICIENCY</div><div class="val" id="m-eff">—<small>%</small></div></div>
+        </div>
+      </div>
+
+      <div class="plot">
+        <h4>MOVEMENT (IN) — PITCHER'S VIEW</h4>
+        <div class="movstats">
+          <div class="b acc">I. VERT. MOV <span class="x" id="m-ivb">—</span></div>
+          <div class="b">HORZ. MOV <span class="x" id="m-hb">—</span></div>
+        </div>
+        <svg id="movplot" viewBox="0 0 340 220" width="100%"></svg>
+      </div>
+
+      <div class="plot">
+        <h4>LOCATION (FT) — PITCHER'S VIEW</h4>
+        <svg id="locplot" viewBox="0 0 340 230" width="100%"></svg>
+      </div>
+    </div>
+
+    <!-- right viewer -->
+    <div class="viewer">
+      <div class="vtop">
+        <button class="vtab on" id="tab3d">3D Delivery</button>
+        <button class="vtab" id="tabref">Reference Video</button>
+        <div class="vspace"></div>
+        <span class="vbadge">OptiTrack mocap · 7 cams</span>
+      </div>
+
+      <div id="scene">
+        <div class="vctrl">
+          <button id="playbtn">⏸ Delivery</button>
+          <button id="resetcam">Reset view</button>
+        </div>
+        <div class="angles" id="angles"></div>
+        <div class="vhint">drag to orbit · scroll to zoom</div>
+      </div>
+
+      <div class="refpane" id="refpane">
+        <div class="angles" id="angles2"></div>
+        <div class="ph"><b>Reference clip — Cam <span id="refcam">1</span></b>grayscale MJPEG from OptiTrack<br/>(placeholder — wire facility clips here)</div>
+      </div>
+
+      <div class="vfoot">
+        <button class="play" id="play2">⏸</button>
+        <div class="scrub"><i id="scrubfill"></i></div>
+        <span id="phaselbl" style="font-size:10px;width:96px;text-align:right">wind-up</span>
+      </div>
+
+      <div class="tagstrip">
+        <div class="t"><b>PITCH TYPE</b><span id="t-type">—</span></div>
+        <div class="t"><b>RESULT</b><span id="t-res">—</span></div>
+        <div class="t"><b>RELEASE</b><span id="t-rel">—</span></div>
+        <div class="t"><b>EXT</b><span id="t-ext">—</span></div>
+      </div>
+      <div class="note">Hero view = 3D skeleton you can orbit to any angle (beats Trackman's flat clip). Swap mock joints for a Motive C3D/NatNet feed to make it real.</div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ============================================================
+   MOCK DATA  — replace with parsed Rapsodo CSV rows
+   ============================================================ */
+const TYPES = {
+  "4-Seam":{c:'#d83a34'},
+  "Sinker":{c:'#e8973a'}, "Slider":{c:'#2f6fd0'}, "Curveball":{c:'#33a06f'}, "Changeup":{c:'#9aa0aa'}
+};
+function rnd(a,b){return a+Math.random()*(b-a)}
+const PROTO = {
+  "4-Seam":{velo:[88,93],spin:[2150,2400],ivb:[15,20],hb:[-4,4],eff:[88,97],tilt:"12:30"},
+  "Sinker":{velo:[87,91],spin:[1950,2200],ivb:[6,11],hb:[10,17],eff:[88,96],tilt:"1:45"},
+  "Slider":{velo:[80,85],spin:[2300,2650],ivb:[0,5],hb:[-12,-4],eff:[40,65],tilt:"9:30"},
+  "Curveball":{velo:[74,79],spin:[2500,2900],ivb:[-12,-6],hb:[6,12],eff:[80,92],tilt:"7:30"},
+  "Changeup":{velo:[81,85],spin:[1650,1900],ivb:[7,12],hb:[12,18],eff:[85,94],tilt:"2:15"}
+};
+const RESULTS=["Strike","Ball","Whiff","Foul","In Play"];
+let PITCHES=[];
+(function build(){
+  const order=["4-Seam","Slider","4-Seam","Changeup","4-Seam","Sinker","Slider","Curveball",
+    "4-Seam","Slider","Changeup","4-Seam","Sinker","Curveball","Slider","4-Seam"];
+  order.forEach((t,i)=>{
+    const p=PROTO[t];
+    PITCHES.push({
+      n:i+1, type:t, color:TYPES[t].c,
+      velo:+rnd(...p.velo).toFixed(1), spin:Math.round(rnd(...p.spin)),
+      ivb:+rnd(...p.ivb).toFixed(1), hb:+rnd(...p.hb).toFixed(1),
+      eff:Math.round(rnd(...p.eff)), tilt:p.tilt,
+      side:+rnd(-1.4,1.4).toFixed(2), height:+rnd(1.4,3.6).toFixed(2),
+      rel:(5.7+rnd(-.2,.3)).toFixed(1)+" ft", ext:(6.2+rnd(-.4,.4)).toFixed(1)+" ft",
+      result:RESULTS[Math.floor(Math.random()*RESULTS.length)]
+    });
+  });
+})();
+
+/* ============================================================ */
+let sel = PITCHES.length-1;
+const $=id=>document.getElementById(id);
+
+function renderList(){
+  let arr=[...PITCHES];
+  const s=$('sortsel').value;
+  if(s==='speed') arr.sort((a,b)=>b.velo-a.velo);
+  if(s==='type') arr.sort((a,b)=>a.type.localeCompare(b.type));
+  if(s==='seq') arr.sort((a,b)=>b.n-a.n);
+  const el=$('plist'); el.innerHTML='';
+  arr.forEach(p=>{
+    const d=document.createElement('div');
+    d.className='pitem'+(p.n===PITCHES[sel].n?' sel':'');
+    d.innerHTML=`<span class="dot ${p.n===PITCHES[sel].n?'ring':''}" style="background:${p.color}"></span>
+      <span class="v">${p.velo.toFixed(1)}</span><span class="n">#${p.n}</span><span class="cam">▤</span>`;
+    d.onclick=()=>{sel=PITCHES.findIndex(x=>x.n===p.n);refresh();};
+    el.appendChild(d);
+  });
+  $('pcount').textContent=PITCHES.length;
+}
+
+function clockToAngle(t){ // "12:30" -> degrees from top, clockwise
+  const [h,m]=t.split(':').map(Number);
+  return ((h%12)+m/60)/12*360;
+}
+function drawDial(p){
+  const cx=75,cy=75,r=58, a=clockToAngle(p.tilt)-90, rad=a*Math.PI/180;
+  const x2=cx+Math.cos(rad)*r, y2=cy+Math.sin(rad)*r;
+  let ticks='';
+  for(let i=0;i<12;i++){const ang=(i/12*360-90)*Math.PI/180;
+    ticks+=`<line x1="${cx+Math.cos(ang)*54}" y1="${cy+Math.sin(ang)*54}" x2="${cx+Math.cos(ang)*60}" y2="${cy+Math.sin(ang)*60}" stroke="#cfd3da" stroke-width="2"/>`;}
+  $('dial').innerHTML=`
+    <circle cx="${cx}" cy="${cy}" r="60" fill="none" stroke="#e6e8ec" stroke-width="2" stroke-dasharray="3 4"/>
+    ${ticks}
+    <line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="${p.color}" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="${x2}" cy="${y2}" r="6" fill="${p.color}"/>
+    <circle cx="${cx}" cy="${cy}" r="20" fill="#fff" stroke="#e6e8ec"/>
+    <text x="${cx}" y="${cy-1}" text-anchor="middle" font-size="11" font-weight="800" fill="#16181d">${p.tilt}</text>
+    <text x="${cx}" y="${cy+12}" text-anchor="middle" font-size="7" fill="#8a909a">TILT</text>`;
+}
+
+function drawMov(){
+  const W=340,H=220, cx=W/2, cy=H/2, sc=W/2/26; // +-26 in
+  let g='';
+  for(let v=-24;v<=24;v+=8){
+    g+=`<line x1="${cx+v*sc}" y1="8" x2="${cx+v*sc}" y2="${H-8}" stroke="#f0f2f5"/>`;
+    g+=`<line x1="8" y1="${cy+v*sc}" x2="${W-8}" y2="${cy+v*sc}" stroke="#f0f2f5"/>`;
+  }
+  g+=`<line x1="${cx}" y1="8" x2="${cx}" y2="${H-8}" stroke="#d8dce2"/>
+      <line x1="8" y1="${cy}" x2="${W-8}" y2="${cy}" stroke="#d8dce2"/>`;
+  PITCHES.forEach((p,i)=>{
+    const x=cx+p.hb*sc, y=cy-p.ivb*sc, isSel=i===sel;
+    g+=`<circle cx="${x}" cy="${y}" r="${isSel?7:5}" fill="${p.color}" fill-opacity="${isSel?1:.6}"
+        stroke="${isSel?'#16181d':'#fff'}" stroke-width="${isSel?2:1}"/>`;
+  });
+  $('movplot').innerHTML=g;
+}
+
+function drawLoc(){
+  const W=340,H=230, x0=40,x1=300, y0=20,y1=200; // strike zone area
+  const sx=v=>x0+(v+2.2)/4.4*(x1-x0);   // side -2.2..2.2 ft
+  const sy=v=>y1-(v/4.2)*(y1-y0);       // height 0..4.2 ft
+  let g='';
+  // zone
+  const zL=sx(-0.83),zR=sx(0.83),zT=sy(3.5),zB=sy(1.5);
+  g+=`<rect x="${zL}" y="${zT}" width="${zR-zL}" height="${zB-zT}" fill="#fafbfc" stroke="#c4c9d1"/>`;
+  for(let k=1;k<3;k++){
+    g+=`<line x1="${zL+(zR-zL)*k/3}" y1="${zT}" x2="${zL+(zR-zL)*k/3}" y2="${zB}" stroke="#e6e8ec"/>`;
+    g+=`<line x1="${zL}" y1="${zT+(zB-zT)*k/3}" x2="${zR}" y2="${zT+(zB-zT)*k/3}" stroke="#e6e8ec"/>`;
+  }
+  // home plate
+  const py=y1+10, hw=(zR-zL)/2*0.9, hcx=(zL+zR)/2;
+  g+=`<polygon points="${hcx-hw},${py} ${hcx+hw},${py} ${hcx+hw},${py+8} ${hcx},${py+16} ${hcx-hw},${py+8}"
+       fill="#f0f2f5" stroke="#c4c9d1"/>`;
+  PITCHES.forEach((p,i)=>{
+    const isSel=i===sel;
+    g+=`<circle cx="${sx(p.side)}" cy="${sy(p.height)}" r="${isSel?7:5}" fill="${p.color}"
+         fill-opacity="${isSel?1:.55}" stroke="${isSel?'#16181d':'#fff'}" stroke-width="${isSel?2:1}"/>`;
+  });
+  $('locplot').innerHTML=g;
+}
+
+function refresh(){
+  const p=PITCHES[sel];
+  $('m-velo').innerHTML=`${p.velo.toFixed(1)}<small>mph</small>`;
+  $('m-tilt').textContent=p.tilt;
+  $('m-spin').innerHTML=`${p.spin}<small>rpm</small>`;
+  $('m-eff').innerHTML=`${p.eff}<small>%</small>`;
+  $('m-ivb').textContent=p.ivb.toFixed(1);
+  $('m-hb').textContent=Math.abs(p.hb).toFixed(1);
+  $('t-type').textContent=p.type;
+  $('t-res').textContent=p.result;
+  $('t-rel').textContent=p.rel;
+  $('t-ext').textContent=p.ext;
+  drawDial(p); drawMov(); drawLoc(); renderList();
+}
+
+/* ============================================================
+   3D DELIVERY VIEWER (Three.js) — mock skeleton keyframes.
+   Replace POSES with joint tracks from Motive (C3D/CSV/NatNet).
+   ============================================================ */
+const JOINTS=["head","neck","mSpine","pelvis","rSh","lSh","rEl","lEl","rWr","lWr",
+              "rHip","lHip","rKnee","lKnee","rAnk","lAnk"];
+const BONES=[["head","neck"],["neck","mSpine"],["mSpine","pelvis"],
+  ["neck","rSh"],["neck","lSh"],["rSh","rEl"],["rEl","rWr"],["lSh","lEl"],["lEl","lWr"],
+  ["pelvis","rHip"],["pelvis","lHip"],["rHip","rKnee"],["rKnee","rAnk"],["lHip","lKnee"],["lKnee","lAnk"]];
+// keyframes: balance -> stride -> cock -> release -> follow
+const POSES=[
+ {head:[0,1.62,0],neck:[0,1.5,0],mSpine:[0,1.25,0],pelvis:[0,.95,0],
+  rSh:[-.18,1.45,0],lSh:[.18,1.45,0],rEl:[-.3,1.2,.05],lEl:[.3,1.2,.05],rWr:[-.05,1.15,.1],lWr:[.05,1.15,.1],
+  rHip:[-.12,.92,0],lHip:[.12,.92,0],rKnee:[-.12,.5,0],lKnee:[.15,.95,.12],rAnk:[-.12,.05,0],lAnk:[.1,.78,.26]},
+ {head:[0,1.58,.18],neck:[0,1.46,.16],mSpine:[0,1.2,.12],pelvis:[0,.9,.2],
+  rSh:[-.2,1.42,.02],lSh:[.2,1.4,.22],rEl:[-.45,1.5,-.25],lEl:[.35,1.42,.22],rWr:[-.5,1.4,-.5],lWr:[.32,1.52,.45],
+  rHip:[-.13,.87,.16],lHip:[.13,.9,.26],rKnee:[-.13,.46,.0],lKnee:[.12,.5,.5],rAnk:[-.13,.05,-.08],lAnk:[.1,.05,.7]},
+ {head:[.02,1.55,.26],neck:[.02,1.46,.24],mSpine:[0,1.22,.2],pelvis:[0,.9,.25],
+  rSh:[-.16,1.46,.06],lSh:[.22,1.42,.18],rEl:[-.42,1.72,-.04],lEl:[.3,1.3,.22],rWr:[-.38,2.02,.06],lWr:[.26,1.18,.3],
+  rHip:[-.12,.87,.2],lHip:[.13,.9,.3],rKnee:[-.12,.46,.05],lKnee:[.11,.5,.52],rAnk:[-.12,.06,-.05],lAnk:[.1,.05,.7]},
+ {head:[.06,1.46,.36],neck:[.05,1.4,.34],mSpine:[.02,1.18,.28],pelvis:[0,.86,.3],
+  rSh:[-.05,1.5,.2],lSh:[.16,1.32,.1],rEl:[-.2,1.7,.32],lEl:[.22,1.05,.16],rWr:[.02,1.6,.62],lWr:[.3,.98,.2],
+  rHip:[-.1,.84,.24],lHip:[.12,.86,.32],rKnee:[-.18,.66,-.06],lKnee:[.1,.5,.55],rAnk:[-.2,.5,-.3],lAnk:[.1,.05,.72]},
+ {head:[.08,1.4,.42],neck:[.06,1.36,.4],mSpine:[.02,1.14,.34],pelvis:[0,.84,.32],
+  rSh:[.05,1.42,.26],lSh:[.14,1.28,.06],rEl:[.1,1.3,.42],lEl:[.16,1.0,.08],rWr:[.2,.95,.55],lWr:[.28,.92,.14],
+  rHip:[-.08,.82,.26],lHip:[.12,.84,.34],rKnee:[-.2,.7,-.1],lKnee:[.1,.5,.56],rAnk:[-.24,.62,-.34],lAnk:[.1,.05,.72]}
+];
+const PHASES=["wind-up","stride","arm cock","release","follow-through"];
+
+let renderer,scene,cam,jointMesh={},boneGeo,boneLine,playing=true,t=0,group;
+let orbit={theta:0.6,phi:1.15,r:4.2,tx:0,ty:1.0,tz:0.25,drag:false,px:0,py:0};
+
+function lerp(a,b,k){return a+(b-a)*k}
+function poseAt(tt){ // tt in [0,1] over full cycle
+  const seg=tt*(POSES.length-1), i=Math.min(POSES.length-2,Math.floor(seg)), k=seg-i;
+  const out={};
+  JOINTS.forEach(j=>{const A=POSES[i][j],B=POSES[i+1][j];
+    out[j]=[lerp(A[0],B[0],k),lerp(A[1],B[1],k),lerp(A[2],B[2],k)];});
+  return out;
+}
+
+function init3D(){
+  const host=$('scene');
+  renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setPixelRatio(window.devicePixelRatio||1);
+  renderer.setSize(host.clientWidth,host.clientHeight);
+  host.appendChild(renderer.domElement);
+  scene=new THREE.Scene();
+  cam=new THREE.PerspectiveCamera(45,host.clientWidth/host.clientHeight,0.1,100);
+  scene.add(new THREE.AmbientLight(0xffffff,0.65));
+  const dl=new THREE.DirectionalLight(0xffffff,0.8);dl.position.set(3,6,4);scene.add(dl);
+  const dl2=new THREE.DirectionalLight(0x88aaff,0.35);dl2.position.set(-4,3,-3);scene.add(dl2);
+
+  // ground + mound + plate direction
+  const grid=new THREE.GridHelper(8,16,0x2a2f38,0x1c2026);grid.position.y=0;scene.add(grid);
+  const mound=new THREE.Mesh(new THREE.CylinderGeometry(1.4,1.6,0.18,40),
+    new THREE.MeshStandardMaterial({color:0x6b5642,roughness:1}));mound.position.set(0,0.09,0);scene.add(mound);
+  const rubber=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.04,0.12),
+    new THREE.MeshStandardMaterial({color:0xdddddd}));rubber.position.set(0,0.2,-0.05);scene.add(rubber);
+  const plate=new THREE.Mesh(new THREE.BoxGeometry(0.43,0.02,0.43),
+    new THREE.MeshStandardMaterial({color:0xeeeeee}));plate.position.set(0,0.02,5.0);scene.add(plate);
+
+  group=new THREE.Group();scene.add(group);
+  // joints
+  const jmat=new THREE.MeshStandardMaterial({color:0xf26722,roughness:.4});
+  JOINTS.forEach(j=>{
+    const m=new THREE.Mesh(new THREE.SphereGeometry(j==='head'?0.085:0.05,16,16),
+      j==='head'?new THREE.MeshStandardMaterial({color:0xffd9c2,roughness:.6}):jmat);
+    group.add(m);jointMesh[j]=m;
+  });
+  // bones
+  boneGeo=new THREE.BufferGeometry();
+  boneGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(BONES.length*2*3),3));
+  boneLine=new THREE.LineSegments(boneGeo,new THREE.LineBasicMaterial({color:0xcfd6e0}));
+  group.add(boneLine);
+
+  bindControls(host);
+  updateCam();
+  animate();
+}
+
+function bindControls(host){
+  host.addEventListener('mousedown',e=>{orbit.drag=true;orbit.px=e.clientX;orbit.py=e.clientY;});
+  window.addEventListener('mouseup',()=>orbit.drag=false);
+  window.addEventListener('mousemove',e=>{
+    if(!orbit.drag)return;
+    orbit.theta-=(e.clientX-orbit.px)*0.01;
+    orbit.phi=Math.max(0.25,Math.min(2.6,orbit.phi-(e.clientY-orbit.py)*0.008));
+    orbit.px=e.clientX;orbit.py=e.clientY;updateCam();
+  });
+  host.addEventListener('wheel',e=>{e.preventDefault();
+    orbit.r=Math.max(2,Math.min(9,orbit.r+e.deltaY*0.004));updateCam();},{passive:false});
+}
+function updateCam(){
+  const x=orbit.tx+orbit.r*Math.sin(orbit.phi)*Math.sin(orbit.theta);
+  const y=orbit.ty+orbit.r*Math.cos(orbit.phi);
+  const z=orbit.tz+orbit.r*Math.sin(orbit.phi)*Math.cos(orbit.theta);
+  cam.position.set(x,y,z);cam.lookAt(orbit.tx,orbit.ty,orbit.tz);
+}
+function applyPose(P){
+  JOINTS.forEach(j=>{const p=P[j];jointMesh[j].position.set(p[0],p[1],p[2]);});
+  const arr=boneGeo.attributes.position.array;let i=0;
+  BONES.forEach(([a,b])=>{const A=P[a],B=P[b];
+    arr[i++]=A[0];arr[i++]=A[1];arr[i++]=A[2];arr[i++]=B[0];arr[i++]=B[1];arr[i++]=B[2];});
+  boneGeo.attributes.position.needsUpdate=true;
+}
+function animate(){
+  requestAnimationFrame(animate);
+  if(playing){t+=0.0045;if(t>1)t=0;}
+  const P=poseAt(t);applyPose(P);
+  const ph=Math.min(PHASES.length-1,Math.floor(t*(POSES.length-1)));
+  $('phaselbl').textContent=PHASES[ph];
+  $('scrubfill').style.width=(t*100)+'%';
+  renderer.render(scene,cam);
+}
+window.addEventListener('resize',()=>{
+  const host=$('scene');if(!renderer)return;
+  cam.aspect=host.clientWidth/host.clientHeight;cam.updateProjectionMatrix();
+  renderer.setSize(host.clientWidth,host.clientHeight);
+});
+
+/* controls */
+function setPlaying(v){playing=v;$('playbtn').textContent=(v?'⏸':'▶')+' Delivery';$('play2').textContent=v?'⏸':'▶';}
+$('playbtn').onclick=()=>setPlaying(!playing);
+$('play2').onclick=()=>setPlaying(!playing);
+$('resetcam').onclick=()=>{orbit.theta=0.6;orbit.phi=1.15;orbit.r=4.2;updateCam();};
+
+// angle presets (camera positions) shared in both panes
+const ANGLES=[
+  {l:'1',theta:0.6,phi:1.15},{l:'2',theta:1.7,phi:1.1},{l:'3',theta:3.0,phi:1.15},
+  {l:'4',theta:-1.4,phi:1.1},{l:'5',theta:0.6,phi:0.5},{l:'6',theta:0.0,phi:1.4},{l:'7',theta:2.4,phi:1.3}
+];
+function buildAngles(el,isRef){
+  el.innerHTML='';
+  ANGLES.forEach((a,idx)=>{
+    const b=document.createElement('button');b.textContent=a.l;if(idx===0)b.className='on';
+    b.onclick=()=>{
+      [...el.children].forEach(c=>c.className='');b.className='on';
+      if(isRef){$('refcam').textContent=a.l;}
+      else{orbit.theta=a.theta;orbit.phi=a.phi;updateCam();}
+    };
+    el.appendChild(b);
+  });
+}
+
+$('tab3d').onclick=()=>{$('tab3d').classList.add('on');$('tabref').classList.remove('on');
+  $('scene').style.display='flex';$('refpane').classList.remove('show');};
+$('tabref').onclick=()=>{$('tabref').classList.add('on');$('tab3d').classList.remove('on');
+  $('scene').style.display='none';$('refpane').classList.add('show');};
+
+$('sortsel').onchange=renderList;
+
+/* boot */
+buildAngles($('angles'),false);
+buildAngles($('angles2'),true);
+refresh();
+init3D();
+</script>
+</body>
+</html>

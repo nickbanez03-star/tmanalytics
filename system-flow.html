@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TM Tracker — System Flow</title>
+<style>
+  :root{
+    --bg:#08090d;--s1:#10121a;--s2:#181b24;--s3:#1e222e;--b1:#242836;--b2:#2e3345;
+    --text:#e8ecf4;--muted:#6b7585;--dim:#3a3f50;--accent:#f26722;
+    --green:#22c55e;--blue:#3b82f6;--purple:#8b5cf6;--cyan:#0891b2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:28px 20px}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{font-size:24px;font-weight:900;letter-spacing:.02em;margin-bottom:3px}
+  h1 span{color:var(--accent)}
+  .sub{font-size:13px;color:var(--muted);margin-bottom:22px}
+  svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:18px;margin-top:22px;padding-top:18px;border-top:1px solid var(--b1)}
+  .leg{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);font-weight:600}
+  .leg .sw{width:26px;height:0;border-top-width:3px;border-top-style:solid}
+  .keys{margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+  .key{background:var(--s1);border:1px solid var(--b1);border-radius:12px;padding:14px 16px}
+  .key h4{font-size:11px;letter-spacing:.1em;color:var(--accent);font-weight:800;margin-bottom:6px}
+  .key p{font-size:12.5px;line-height:1.6;color:#c8cdd8}
+  .key b{color:var(--text)}
+  @media print{body{background:#fff;color:#000}.key,.legend{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TM<span> TRACKER</span> — System Flow</h1>
+  <div class="sub">Rapsodo data → Trackman-style experience. How a pitch travels from the ball to the player's phone.</div>
+
+  <svg viewBox="0 0 1180 760" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,Segoe UI,Roboto,sans-serif">
+    <defs>
+      <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <path d="M0,0 L7,3 L0,6 Z" fill="#5b6b7b"/></marker>
+      <marker id="arrA" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <path d="M0,0 L7,3 L0,6 Z" fill="#f26722"/></marker>
+      <marker id="arrB" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <path d="M0,0 L7,3 L0,6 Z" fill="#3b82f6"/></marker>
+      <marker id="arrG" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <path d="M0,0 L7,3 L0,6 Z" fill="#22c55e"/></marker>
+      <marker id="arrBack" markerWidth="9" markerHeight="9" refX="2" refY="3" orient="auto" markerUnits="strokeWidth">
+        <path d="M7,0 L0,3 L7,6 Z" fill="#f26722"/></marker>
+    </defs>
+
+    <!-- ZONES -->
+    <rect x="14" y="44" width="900" height="492" rx="16" fill="rgba(242,103,34,.04)" stroke="#2e3345" stroke-dasharray="6 6"/>
+    <text x="30" y="68" fill="#6b7585" font-size="11" font-weight="800" letter-spacing="2">AT THE FACILITY · LIVE</text>
+
+    <rect x="14" y="556" width="1152" height="190" rx="16" fill="rgba(59,130,246,.05)" stroke="#2e3345" stroke-dasharray="6 6"/>
+    <text x="30" y="580" fill="#6b7585" font-size="11" font-weight="800" letter-spacing="2">FROM ANYWHERE · AFTER THE SESSION</text>
+
+    <!-- NODE: Rapsodo -->
+    <g>
+      <rect x="44" y="120" width="214" height="92" rx="13" fill="#10121a" stroke="#e53e3e" stroke-width="1.5"/>
+      <text x="60" y="148" fill="#e53e3e" font-size="13" font-weight="900">⚾ Rapsodo PRO 3.0</text>
+      <text x="60" y="170" fill="#c8cdd8" font-size="11">Measures every pitch:</text>
+      <text x="60" y="187" fill="#6b7585" font-size="10.5">velo · spin · tilt · IVB/HB · location</text>
+      <text x="60" y="203" fill="#6b7585" font-size="10.5">+ auto pitch-type. Talks over Wi-Fi.</text>
+    </g>
+
+    <!-- NODE: OptiTrack -->
+    <g>
+      <rect x="44" y="356" width="214" height="104" rx="13" fill="#10121a" stroke="#8b5cf6" stroke-width="1.5"/>
+      <text x="60" y="384" fill="#8b5cf6" font-size="13" font-weight="900">🎥 OptiTrack + Motive</text>
+      <text x="60" y="406" fill="#c8cdd8" font-size="11">7 mocap cameras → Windows PC</text>
+      <text x="60" y="423" fill="#6b7585" font-size="10.5">Full-body pitcher skeleton +</text>
+      <text x="60" y="439" fill="#6b7585" font-size="10.5">7 grayscale clips, per delivery.</text>
+      <text x="60" y="455" fill="#6b7585" font-size="10.5">Synced to pitches by timestamp.</text>
+    </g>
+
+    <!-- NODE: Pi hub -->
+    <g>
+      <rect x="408" y="196" width="260" height="190" rx="15" fill="#13161f" stroke="#f26722" stroke-width="2"/>
+      <text x="428" y="226" fill="#f26722" font-size="14" font-weight="900">🍓 Raspberry Pi</text>
+      <text x="428" y="246" fill="#6b7585" font-size="10.5" font-weight="700">always-on, in the corner</text>
+      <line x1="428" y1="258" x2="648" y2="258" stroke="#242836"/>
+      <text x="428" y="278" fill="#c8cdd8" font-size="11">• Wi-Fi access point (on-path)</text>
+      <text x="428" y="298" fill="#c8cdd8" font-size="11">• Sniffs + parses Rapsodo data</text>
+      <text x="428" y="318" fill="#c8cdd8" font-size="11">• WebSocket server (live push)</text>
+      <text x="428" y="338" fill="#c8cdd8" font-size="11">• Serves TV + iPad apps</text>
+      <text x="428" y="358" fill="#c8cdd8" font-size="11">• Pushes finished sessions up</text>
+      <text x="428" y="377" fill="#6b7585" font-size="10">The brain. Nothing else needs the cloud.</text>
+    </g>
+
+    <!-- NODE: iPad -->
+    <g>
+      <rect x="724" y="92" width="176" height="150" rx="13" fill="#10121a" stroke="#22c55e" stroke-width="1.5"/>
+      <text x="740" y="120" fill="#22c55e" font-size="13" font-weight="900">📋 iPad</text>
+      <text x="740" y="137" fill="#6b7585" font-size="10" font-weight="700">COACH CONTROL</text>
+      <text x="740" y="159" fill="#c8cdd8" font-size="10.5">Roster · switch athlete</text>
+      <text x="740" y="176" fill="#c8cdd8" font-size="10.5">Start/stop · pick type</text>
+      <text x="740" y="193" fill="#c8cdd8" font-size="10.5">Fix pitch type · tag</text>
+      <text x="740" y="210" fill="#c8cdd8" font-size="10.5">outcomes (Live ABs)</text>
+      <text x="740" y="231" fill="#6b7585" font-size="10">🔒 facility PIN · 🔑 player PIN</text>
+    </g>
+
+    <!-- NODE: TV -->
+    <g>
+      <rect x="724" y="300" width="176" height="120" rx="13" fill="#10121a" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="740" y="328" fill="#3b82f6" font-size="13" font-weight="900">📺 Big-Screen TV</text>
+      <text x="740" y="345" fill="#6b7585" font-size="10" font-weight="700">WHAT THE ROOM WATCHES</text>
+      <text x="740" y="367" fill="#c8cdd8" font-size="10.5">Trackman-style board</text>
+      <text x="740" y="384" fill="#c8cdd8" font-size="10.5">Pitch flashes live · 3D</text>
+      <text x="740" y="401" fill="#c8cdd8" font-size="10.5">trajectory + strike zone</text>
+    </g>
+
+    <!-- NODE: Cloud -->
+    <g>
+      <rect x="408" y="592" width="240" height="120" rx="13" fill="#10121a" stroke="#0891b2" stroke-width="1.5"/>
+      <text x="426" y="620" fill="#0891b2" font-size="13" font-weight="900">☁️ Cloud (FastAPI)</text>
+      <text x="426" y="641" fill="#c8cdd8" font-size="10.5">Stores sessions · accounts</text>
+      <text x="426" y="658" fill="#c8cdd8" font-size="10.5">Auth · share links</text>
+      <text x="426" y="675" fill="#6b7585" font-size="10">Deploy once (Railway, ~5 min).</text>
+      <text x="426" y="694" fill="#6b7585" font-size="10">Links sessions to players by email.</text>
+    </g>
+
+    <!-- NODE: Portal -->
+    <g>
+      <rect x="724" y="592" width="420" height="120" rx="13" fill="#10121a" stroke="#f26722" stroke-width="1.5"/>
+      <text x="744" y="620" fill="#f26722" font-size="13" font-weight="900">📱 Player Portal</text>
+      <text x="744" y="637" fill="#6b7585" font-size="10" font-weight="700">THE PITCHER, FROM HOME</text>
+      <text x="744" y="659" fill="#c8cdd8" font-size="10.5">Logs in with ✉️ email + 🔑 own password</text>
+      <text x="744" y="676" fill="#c8cdd8" font-size="10.5">Every pitch · catcher's view · OptiTrack clip · MLB percentiles</text>
+      <text x="744" y="693" fill="#c8cdd8" font-size="10.5">Compare sessions · AI debrief · notes · share link · PDF</text>
+    </g>
+
+    <!-- ARROWS -->
+    <!-- Rapsodo -> Pi -->
+    <path d="M258,168 C330,176 350,236 406,256" fill="none" stroke="#f26722" stroke-width="2.5" marker-end="url(#arrA)"/>
+    <text x="300" y="200" fill="#f26722" font-size="10.5" font-weight="700">Wi-Fi · passive sniff</text>
+    <!-- Motive -> Pi -->
+    <path d="M258,404 C330,398 352,360 406,344" fill="none" stroke="#8b5cf6" stroke-width="2.5" marker-end="url(#arrA)"/>
+    <text x="290" y="392" fill="#8b5cf6" font-size="10.5" font-weight="700">NatNet · timestamp</text>
+    <!-- Pi <-> iPad (bidirectional) -->
+    <path d="M668,250 C696,210 700,196 722,168" fill="none" stroke="#f26722" stroke-width="2.5" marker-end="url(#arrA)" marker-start="url(#arrBack)"/>
+    <text x="640" y="182" fill="#f26722" font-size="10.5" font-weight="700">WebSocket · control</text>
+    <!-- Pi -> TV -->
+    <path d="M668,330 C694,344 700,352 722,358" fill="none" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arrB)"/>
+    <text x="636" y="330" fill="#3b82f6" font-size="10.5" font-weight="700">WebSocket · live</text>
+    <!-- Pi -> Cloud -->
+    <path d="M530,386 C528,470 528,520 528,590" fill="none" stroke="#0891b2" stroke-width="2.5" marker-end="url(#arrB)"/>
+    <text x="540" y="470" fill="#0891b2" font-size="10.5" font-weight="700">session sync (HTTPS)</text>
+    <!-- Cloud -> Portal -->
+    <path d="M648,652 L722,652" fill="none" stroke="#f26722" stroke-width="2.5" marker-end="url(#arrA)"/>
+    <text x="650" y="642" fill="#f26722" font-size="10.5" font-weight="700">login + fetch</text>
+    <!-- iPad ..linked by email.. Portal -->
+    <path d="M812,242 C900,420 920,470 934,590" fill="none" stroke="#3a3f50" stroke-width="1.5" stroke-dasharray="4 5"/>
+    <text x="905" y="430" fill="#6b7585" font-size="10" font-weight="700" transform="rotate(70 905 430)">linked by email</text>
+  </svg>
+
+  <div class="legend">
+    <div class="leg"><span class="sw" style="border-top-color:#f26722"></span>Rapsodo data path</div>
+    <div class="leg"><span class="sw" style="border-top-color:#8b5cf6"></span>OptiTrack video</div>
+    <div class="leg"><span class="sw" style="border-top-color:#3b82f6"></span>Live display feed</div>
+    <div class="leg"><span class="sw" style="border-top-color:#0891b2"></span>Cloud sync</div>
+    <div class="leg"><span class="sw" style="border-top-color:#3a3f50;border-top-style:dashed"></span>Account link (email)</div>
+  </div>
+
+  <div class="keys">
+    <div class="key"><h4>🔒 FACILITY PIN</h4><p>Unlocks the <b>iPad</b> control app on a shared device. <b>Optional</b> — skip it and the app opens straight through. One per iPad.</p></div>
+    <div class="key"><h4>🔑 PLAYER PIN</h4><p>A quick 4-digit code to <b>start a session as a given pitcher</b>. <b>Optional</b> per player. Not the same as their portal password.</p></div>
+    <div class="key"><h4>✉️ PORTAL LOGIN</h4><p>The pitcher's <b>own email + password</b> for the remote portal. Linked to their facility profile by email, so sessions appear automatically.</p></div>
+    <div class="key"><h4>🤖 WHAT'S AUTOMATIC</h4><p>Ball-flight + pitch type capture themselves off the Rapsodo sniff. The only optional human taps: fixing a mis-classified pitch, and logging hitter outcomes during <b>Live ABs</b>.</p></div>
+  </div>
+</div>
+</body>
+</html>

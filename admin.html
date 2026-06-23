@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TM Analytics — Admin</title>
+<style>
+:root{
+  --bg:#08090d;--s1:#10121a;--s2:#181b24;--s3:#1e222e;
+  --b1:#242836;--b2:#2e3345;--text:#e8ecf4;--muted:#6b7585;--dim:#3a3f50;
+  --accent:#f26722;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--blue:#3b82f6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased}
+button{cursor:pointer;font-family:inherit;border:none}
+input,select,textarea{outline:none;font-family:inherit}
+.hidden{display:none!important}
+
+/* ── Login ── */
+#pg-login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-card{background:var(--s1);border:1px solid var(--b1);border-radius:16px;
+  padding:40px;width:100%;max-width:400px}
+.login-logo{font-size:22px;font-weight:900;letter-spacing:.28em;margin-bottom:4px}
+.login-logo span{color:var(--accent)}
+.login-sub{font-size:10px;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:32px}
+.login-label{font-size:10px;letter-spacing:.1em;font-weight:700;color:var(--muted);margin-bottom:6px}
+.login-input{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:9px;
+  padding:11px 14px;color:var(--text);font-size:14px;margin-bottom:14px}
+.login-input:focus{border-color:var(--accent)}
+.login-btn{width:100%;background:var(--accent);color:#fff;border-radius:10px;
+  padding:13px;font-size:14px;font-weight:800;letter-spacing:.04em;margin-top:4px}
+.login-btn:hover{opacity:.88}
+.login-hint{font-size:11px;color:var(--muted);margin-top:12px;text-align:center;line-height:1.5}
+.login-err{font-size:12px;color:var(--red);font-weight:700;margin-top:10px;min-height:18px}
+
+/* ── App shell ── */
+#pg-app{min-height:100vh;display:flex;flex-direction:column}
+.topbar{height:56px;background:rgba(8,9,13,.95);border-bottom:1px solid var(--b1);
+  display:flex;align-items:center;padding:0 24px;gap:14px;position:sticky;top:0;z-index:50}
+.topbar-logo{font-size:16px;font-weight:900;letter-spacing:.28em}
+.topbar-logo span{color:var(--accent)}
+.topbar-badge{font-size:9px;letter-spacing:.14em;font-weight:800;color:var(--accent);
+  background:rgba(242,103,34,.15);border:1px solid rgba(242,103,34,.3);
+  border-radius:5px;padding:2px 7px;margin-left:2px}
+.topbar-sp{flex:1}
+.topbar-out{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;
+  background:var(--s2);border:1px solid var(--b2);color:var(--muted)}
+.topbar-out:hover{color:var(--text)}
+
+.tabs{display:flex;gap:2px;padding:0 24px;background:var(--s1);border-bottom:1px solid var(--b1)}
+.tab{padding:14px 16px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .15s}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--text);border-bottom-color:var(--accent)}
+
+.content{flex:1;padding:24px;max-width:1100px;width:100%;margin:0 auto}
+
+/* ── Stat cards ── */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px}
+.stat-card{background:var(--s1);border:1px solid var(--b1);border-radius:13px;padding:20px 22px}
+.stat-val{font-size:32px;font-weight:900;line-height:1}
+.stat-lbl{font-size:10px;letter-spacing:.12em;font-weight:700;color:var(--muted);margin-top:6px}
+
+/* ── Section ── */
+.sec-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.sec-head h2{font-size:11px;letter-spacing:.12em;font-weight:800;color:var(--muted)}
+.sec-head-sp{flex:1}
+
+/* ── Table ── */
+.tbl{width:100%;border-collapse:collapse;margin-bottom:32px}
+.tbl th{font-size:10px;letter-spacing:.1em;font-weight:800;color:var(--muted);
+  padding:8px 12px;text-align:left;border-bottom:1px solid var(--b1)}
+.tbl td{padding:11px 12px;border-bottom:1px solid var(--b1);font-size:13px;vertical-align:middle}
+.tbl tr:hover td{background:var(--s2)}
+.tbl tr:last-child td{border-bottom:none}
+.av{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;
+  justify-content:center;font-size:11px;font-weight:900;color:#fff;background:var(--accent);
+  flex-shrink:0}
+.player-cell{display:flex;align-items:center;gap:10px}
+.player-name{font-weight:700}
+.player-meta{font-size:11px;color:var(--muted);margin-top:1px}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+.badge-rh{background:rgba(59,130,246,.15);color:var(--blue)}
+.badge-lh{background:rgba(139,92,246,.15);color:#8b5cf6}
+.velo-val{font-weight:800;font-size:14px}
+.date-val{color:var(--muted);font-size:12px}
+.link-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.12);
+  color:var(--green);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700}
+.unlink-chip{background:rgba(107,117,133,.12);color:var(--muted)}
+
+/* ── Action buttons ── */
+.btn{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;transition:opacity .15s}
+.btn:hover{opacity:.8}
+.btn-ghost{background:var(--s2);border:1px solid var(--b2);color:var(--text)}
+.btn-red{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--red)}
+.btn-green{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--green)}
+
+/* ── Link form ── */
+.link-form{background:var(--s1);border:1px solid var(--b1);border-radius:13px;
+  padding:22px;margin-bottom:28px}
+.link-form h3{font-size:11px;letter-spacing:.1em;font-weight:800;color:var(--muted);margin-bottom:16px}
+.link-row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+.frow{display:flex;flex-direction:column;gap:5px}
+.frow label{font-size:10px;letter-spacing:.1em;font-weight:700;color:var(--muted)}
+.frow input{background:var(--s2);border:1px solid var(--b2);border-radius:8px;
+  padding:9px 12px;color:var(--text);font-size:13px}
+.frow input:focus{border-color:var(--accent)}
+.link-result{font-size:12px;font-weight:700;margin-top:10px;min-height:18px}
+.link-result.ok{color:var(--green)}
+.link-result.err{color:var(--red)}
+
+/* ── Invite ── */
+.invite-grid{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;align-items:end}
+.invite-code-row{display:flex;align-items:center;gap:8px}
+.invite-code{font-family:monospace;font-size:13px;font-weight:700;color:var(--text);
+  background:var(--s2);border:1px solid var(--b2);border-radius:7px;
+  padding:5px 10px;flex:1;word-break:break-all}
+.copy-btn{background:var(--s2);border:1px solid var(--b2);border-radius:7px;
+  padding:6px 10px;font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}
+.copy-btn:hover{color:var(--text)}
+.status-pill{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px}
+.status-pending{background:rgba(234,179,8,.15);color:var(--yellow)}
+.status-used{background:rgba(34,197,94,.15);color:var(--green)}
+.status-expired{background:rgba(107,117,133,.12);color:var(--muted)}
+
+/* ── Empty state ── */
+.empty{text-align:center;padding:60px 24px;color:var(--muted);font-size:13px}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--s3);border:1px solid var(--b2);border-radius:10px;
+  padding:10px 20px;font-size:13px;font-weight:700;opacity:0;
+  transition:all .2s;pointer-events:none;white-space:nowrap;z-index:999}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- Login -->
+<div id="pg-login">
+  <div class="login-card">
+    <div class="login-logo">TM<span> ANALYTICS</span></div>
+    <div class="login-sub">FACILITY ADMIN</div>
+    <div class="login-label">CLOUD API URL</div>
+    <input class="login-input" type="text" id="l-url" placeholder="http://localhost:8000"/>
+    <div class="login-label">FACILITY API KEY</div>
+    <input class="login-input" type="password" id="l-key" placeholder="From your .env file"/>
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="l-err"></div>
+    <div class="login-hint">Your API key is in <strong>cloud/.env</strong> under FACILITY_API_KEY</div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="pg-app" class="hidden">
+  <div class="topbar">
+    <div class="topbar-logo">TM<span> ANALYTICS</span></div>
+    <div class="topbar-badge">ADMIN</div>
+    <div class="topbar-sp"></div>
+    <button class="topbar-out" onclick="logout()">Sign Out</button>
+  </div>
+  <div class="tabs">
+    <div class="tab on" id="tab-players" onclick="showTab('players')">Players</div>
+    <div class="tab" id="tab-sessions" onclick="showTab('sessions')">Sessions</div>
+    <div class="tab" id="tab-invites" onclick="showTab('invites')">Invites</div>
+  </div>
+  <div class="content">
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-val" id="st-players">—</div><div class="stat-lbl">REGISTERED PLAYERS</div></div>
+      <div class="stat-card"><div class="stat-val" id="st-sessions">—</div><div class="stat-lbl">TOTAL SESSIONS</div></div>
+      <div class="stat-card"><div class="stat-val" id="st-pitches">—</div><div class="stat-lbl">TOTAL PITCHES</div></div>
+    </div>
+
+    <!-- Players tab -->
+    <div id="pane-players">
+      <div class="link-form">
+        <h3>LINK PLAYER ACCOUNT TO FACILITY PROFILE</h3>
+        <div class="link-row">
+          <div class="frow"><label>PLAYER EMAIL</label>
+            <input type="email" id="lk-email" placeholder="player@example.com"/></div>
+          <div class="frow"><label>FACILITY PROFILE ID</label>
+            <input type="text" id="lk-fid" placeholder="e.g. player_001"/></div>
+          <button class="btn btn-green" onclick="linkAccount()">Link</button>
+        </div>
+        <div class="link-result" id="lk-result"></div>
+      </div>
+      <div class="sec-head">
+        <h2>ALL PLAYERS</h2>
+        <div class="sec-head-sp"></div>
+        <button class="btn btn-ghost" onclick="loadPlayers()">↻ Refresh</button>
+      </div>
+      <table class="tbl" id="tbl-players">
+        <thead><tr>
+          <th>PLAYER</th><th>SESSIONS</th><th>PITCHES</th>
+          <th>TOP VELO</th><th>LAST SESSION</th><th>LINKED</th><th></th>
+        </tr></thead>
+        <tbody id="tbody-players"></tbody>
+      </table>
+    </div>
+
+    <!-- Invites tab -->
+    <div id="pane-invites" class="hidden">
+      <div class="link-form">
+        <h3>GENERATE INVITE CODE</h3>
+        <div class="invite-grid">
+          <div class="frow"><label>FOR EMAIL <span style="color:var(--dim)">(optional — locks invite)</span></label>
+            <input type="email" id="inv-email" placeholder="player@example.com"/></div>
+          <div class="frow"><label>LABEL <span style="color:var(--dim)">(your reference)</span></label>
+            <input type="text" id="inv-note" placeholder="e.g. Jake Martinez — SP"/></div>
+          <div class="frow"><label>EXPIRES IN</label>
+            <select id="inv-days" style="background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px">
+              <option value="3">3 days</option>
+              <option value="7" selected>7 days</option>
+              <option value="14">14 days</option>
+              <option value="30">30 days</option>
+            </select></div>
+          <div class="frow"><label>&nbsp;</label>
+            <button class="btn btn-green" style="width:100%" onclick="createInvite()">Generate</button></div>
+        </div>
+        <div id="inv-result" style="margin-top:14px"></div>
+      </div>
+      <div class="sec-head">
+        <h2>ALL INVITES</h2>
+        <div class="sec-head-sp"></div>
+        <button class="btn btn-ghost" onclick="loadInvites()">↻ Refresh</button>
+      </div>
+      <table class="tbl" id="tbl-invites">
+        <thead><tr>
+          <th>CODE</th><th>LABEL</th><th>EMAIL LOCK</th>
+          <th>STATUS</th><th>EXPIRES</th><th></th>
+        </tr></thead>
+        <tbody id="tbody-invites"></tbody>
+      </table>
+    </div>
+
+    <!-- Sessions tab -->
+    <div id="pane-sessions" class="hidden">
+      <div class="sec-head">
+        <h2>RECENT SESSIONS (last 100)</h2>
+        <div class="sec-head-sp"></div>
+        <button class="btn btn-ghost" onclick="loadSessions()">↻ Refresh</button>
+      </div>
+      <table class="tbl" id="tbl-sessions">
+        <thead><tr>
+          <th>PLAYER</th><th>DATE</th><th>PITCHES</th>
+          <th>AVG MPH</th><th>MAX MPH</th><th>AVG SPIN</th>
+        </tr></thead>
+        <tbody id="tbody-sessions"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let API='', KEY='';
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fdate(iso){if(!iso)return'—';const d=new Date(iso+'T12:00:00');return MON[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();}
+function initials(name){return(name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
+
+async function api(path,opts={}){
+  const r=await fetch(API+path,{...opts,headers:{
+    'Content-Type':'application/json','x-facility-key':KEY,...(opts.headers||{})}});
+  if(!r.ok)throw new Error((await r.json()).detail||r.statusText);
+  return r.json();
+}
+
+async function doLogin(){
+  const url=$('l-url').value.trim().replace(/\/$/,'');
+  const key=$('l-key').value.trim();
+  if(!url||!key){$('l-err').textContent='Enter both fields.';return;}
+  $('l-err').textContent='Connecting…';
+  try{
+    API=url; KEY=key;
+    await api('/admin/stats');
+    localStorage.setItem('tma_admin_url',url);
+    localStorage.setItem('tma_admin_key',key);
+    $('pg-login').classList.add('hidden');
+    $('pg-app').classList.remove('hidden');
+    loadStats(); loadPlayers();
+  }catch(e){$('l-err').textContent='Connection failed. Check the URL and key.';}
+}
+function logout(){
+  localStorage.removeItem('tma_admin_key');
+  $('pg-app').classList.add('hidden');
+  $('pg-login').classList.remove('hidden');
+  $('l-err').textContent='';
+}
+
+async function loadStats(){
+  try{
+    const s=await api('/admin/stats');
+    $('st-players').textContent=s.totalPlayers;
+    $('st-sessions').textContent=s.totalSessions;
+    $('st-pitches').textContent=s.totalPitches.toLocaleString();
+  }catch(e){}
+}
+
+async function loadPlayers(){
+  try{
+    const players=await api('/admin/players');
+    const tb=$('tbody-players');
+    if(!players.length){tb.innerHTML='<tr><td colspan="7"><div class="empty">No players registered yet.</div></td></tr>';return;}
+    tb.innerHTML=players.map(p=>`
+      <tr>
+        <td><div class="player-cell">
+          <div class="av">${initials(p.name)}</div>
+          <div><div class="player-name">${p.name}</div>
+            <div class="player-meta">${p.email} · <span class="badge ${p.throws==='L'?'badge-lh':'badge-rh'}">${p.throws==='L'?'LHP':'RHP'}</span> ${p.position} ${p.team?'· '+p.team:''}</div>
+          </div>
+        </div></td>
+        <td>${p.sessionCount}</td>
+        <td>${p.totalPitches.toLocaleString()}</td>
+        <td class="velo-val">${p.careerMaxVelo?p.careerMaxVelo.toFixed(1)+' mph':'—'}</td>
+        <td class="date-val">${fdate(p.lastSession)}</td>
+        <td>${p.facilityIds.length?
+          '<span class="link-chip">✓ LINKED</span>':
+          '<span class="link-chip unlink-chip">NOT LINKED</span>'}</td>
+        <td><button class="btn btn-red" onclick="deletePlayer('${p.id}','${p.name}')">Remove</button></td>
+      </tr>`).join('');
+  }catch(e){toast('Error loading players');}
+}
+
+async function loadSessions(){
+  try{
+    const sessions=await api('/admin/sessions');
+    const tb=$('tbody-sessions');
+    if(!sessions.length){tb.innerHTML='<tr><td colspan="6"><div class="empty">No sessions yet.</div></td></tr>';return;}
+    tb.innerHTML=sessions.map(s=>`
+      <tr>
+        <td><strong>${s.playerName}</strong></td>
+        <td class="date-val">${fdate(s.date)}</td>
+        <td>${s.totalPitches}</td>
+        <td>${s.avgVelo?s.avgVelo.toFixed(1):'—'}</td>
+        <td class="velo-val">${s.maxVelo?s.maxVelo.toFixed(1):'—'}</td>
+        <td>${s.avgSpin?Math.round(s.avgSpin).toLocaleString():'—'}</td>
+      </tr>`).join('');
+  }catch(e){toast('Error loading sessions');}
+}
+
+async function deletePlayer(id,name){
+  if(!confirm(`Remove ${name}?\n\nThis deletes their account and all sessions permanently.`))return;
+  try{
+    await api(`/admin/players/${id}`,{method:'DELETE'});
+    toast(`${name} removed`);
+    loadStats(); loadPlayers();
+  }catch(e){toast('Error removing player');}
+}
+
+async function linkAccount(){
+  const email=$('lk-email').value.trim();
+  const fid=$('lk-fid').value.trim();
+  if(!email||!fid){$('lk-result').textContent='Enter both fields.';$('lk-result').className='link-result err';return;}
+  try{
+    const r=await api('/sync/link-account',{method:'POST',
+      body:JSON.stringify({email,facility_profile_id:fid})});
+    $('lk-result').textContent=`✓ Linked ${r.player} to profile "${fid}"`;
+    $('lk-result').className='link-result ok';
+    $('lk-email').value=''; $('lk-fid').value='';
+    loadPlayers();
+  }catch(e){
+    $('lk-result').textContent=e.message;
+    $('lk-result').className='link-result err';
+  }
+}
+
+async function createInvite(){
+  const email=$('inv-email').value.trim();
+  const note=$('inv-note').value.trim();
+  const days=parseInt($('inv-days').value)||7;
+  try{
+    const r=await api('/admin/invites',{method:'POST',body:JSON.stringify({email,note,expires_days:days})});
+    const div=$('inv-result');
+    div.innerHTML=`
+      <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:14px 16px">
+        <div style="font-size:10px;letter-spacing:.1em;font-weight:800;color:var(--muted);margin-bottom:8px">INVITE GENERATED — share this code with the player</div>
+        <div class="invite-code-row">
+          <div class="invite-code" id="new-inv-code">${r.code}</div>
+          <button class="copy-btn" onclick="copyCode('${r.code}')">Copy Code</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px">Expires ${new Date(r.expires_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+      </div>`;
+    $('inv-email').value=''; $('inv-note').value='';
+    loadInvites();
+  }catch(e){toast('Error creating invite: '+e.message);}
+}
+
+async function loadInvites(){
+  try{
+    const invites=await api('/admin/invites');
+    const tb=$('tbody-invites');
+    if(!invites.length){tb.innerHTML='<tr><td colspan="6"><div class="empty">No invites yet.</div></td></tr>';return;}
+    tb.innerHTML=invites.map(inv=>`
+      <tr>
+        <td><div class="invite-code-row">
+          <span style="font-family:monospace;font-size:12px;font-weight:700">${inv.code.slice(0,10)}…</span>
+          <button class="copy-btn" onclick="copyCode('${inv.code}')">Copy</button>
+        </div></td>
+        <td>${inv.note||'<span style="color:var(--muted)">—</span>'}</td>
+        <td>${inv.email||'<span style="color:var(--muted)">Any</span>'}</td>
+        <td><span class="status-pill status-${inv.status}">${inv.status.toUpperCase()}</span></td>
+        <td class="date-val">${fdate(inv.expires_at.slice(0,10))}</td>
+        <td>${inv.status==='pending'?`<button class="btn btn-red" onclick="revokeInvite('${inv.code}')">Revoke</button>`:'—'}</td>
+      </tr>`).join('');
+  }catch(e){toast('Error loading invites');}
+}
+
+async function revokeInvite(code){
+  if(!confirm('Revoke this invite? It will no longer be usable.'))return;
+  try{
+    await api(`/admin/invites/${code}`,{method:'DELETE'});
+    toast('Invite revoked'); loadInvites();
+  }catch(e){toast('Error revoking invite');}
+}
+
+function copyCode(code){
+  navigator.clipboard&&navigator.clipboard.writeText(code).then(()=>toast('Code copied!'));
+}
+
+function showTab(tab){
+  ['players','sessions','invites'].forEach(t=>{
+    $('pane-'+t).classList.toggle('hidden',t!==tab);
+    $('tab-'+t).classList.toggle('on',t===tab);
+  });
+  if(tab==='sessions')loadSessions();
+  if(tab==='invites')loadInvites();
+}
+
+let _tt;
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2000);}
+
+// Auto-login from localStorage (keep URL but not key for security)
+(function(){
+  const url=localStorage.getItem('tma_admin_url')||'';
+  const key=localStorage.getItem('tma_admin_key')||'';
+  if(url)$('l-url').value=url;
+  if(key)$('l-key').value=key;
+})();
+</script>
+</body>
+</html>
