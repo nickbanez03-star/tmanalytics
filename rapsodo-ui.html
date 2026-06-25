@@ -238,11 +238,6 @@ input,select,textarea{outline:none;font-family:inherit}
 .vctrl button{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);
   color:var(--text);border-radius:6px;font-size:10px;font-weight:700;padding:4px 8px}
 .vctrl button:hover{background:rgba(255,255,255,.13)}
-.angles{position:absolute;left:50%;transform:translateX(-50%);bottom:8px;
-  display:flex;gap:4px;z-index:10}
-.angles button{width:25px;height:25px;border-radius:50%;border:1px solid var(--border2);
-  background:var(--surface2);color:var(--muted);font-size:10px;font-weight:800}
-.angles button.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .vhint{position:absolute;left:8px;bottom:8px;color:var(--dim);font-size:9px;pointer-events:none}
 
 /* trajectory info overlay */
@@ -591,7 +586,6 @@ input,select,textarea{outline:none;font-family:inherit}
           <button id="resetcam">Reset</button>
           <button id="clear-paths-btn" onclick="clearTrajHistory()" style="color:var(--muted)">Clear</button>
         </div>
-        <div class="angles" id="angles"></div>
         <div class="vhint">drag · scroll to zoom</div>
       </div>
       <div class="viewer-foot">
@@ -1025,9 +1019,20 @@ function beginSession(player,kind,skipWS){
     +` &nbsp;<span style="color:#f26722;font-weight:800">${KIND_LABEL[currentSession.kind]||''}</span>`;
   document.getElementById('screen-profiles').classList.add('hidden');
   document.getElementById('screen-session').classList.remove('hidden');
-  // Lazy-init Three.js now that #scene has real dimensions
+  // Lazy-init Three.js — defer one RAF so the browser layouts #scene first
   if(!renderer){
-    try{init3D();}catch(e){console.warn('3D init failed',e);}
+    requestAnimationFrame(()=>{
+      try{
+        init3D();
+      }catch(e){
+        console.error('3D init failed:',e);
+        const msg=document.createElement('div');
+        msg.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;pointer-events:none';
+        msg.innerHTML='<span style="color:#f26722;font-size:11px;font-weight:800">3D VIEWER UNAVAILABLE</span>'
+          +'<span style="color:#6b7585;font-size:9px">'+e.message+'</span>';
+        $('scene').appendChild(msg);
+      }
+    });
   } else {
     const h=$('scene');
     renderer.setSize(h.clientWidth,h.clientHeight);
@@ -1381,11 +1386,14 @@ function poseAt(tt){
 
 function init3D(){
   const host=$('scene');
-  renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  if(typeof THREE==='undefined') throw new Error('Three.js not loaded');
+  renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.setClearColor(0x08090d,1);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-  renderer.setSize(host.clientWidth,host.clientHeight);
+  renderer.setSize(host.clientWidth||800,host.clientHeight||600);
   host.appendChild(renderer.domElement);
   scene3=new THREE.Scene();
+  scene3.background=new THREE.Color(0x0c0e18);
   cam3=new THREE.PerspectiveCamera(45,host.clientWidth/host.clientHeight,.1,100);
   scene3.add(new THREE.AmbientLight(0xffffff,.85));
   const dl=new THREE.DirectionalLight(0xffffff,1.1);dl.position.set(3,6,4);scene3.add(dl);
@@ -1605,20 +1613,6 @@ window.addEventListener('resize',()=>{
   renderer.setSize(h.clientWidth,h.clientHeight);
 });
 
-// Angle buttons
-const ANGLE_PRESETS=[
-  {l:'1',theta:.6,phi:1.15},{l:'2',theta:1.7,phi:1.1},{l:'3',theta:3.0,phi:1.15},
-  {l:'4',theta:-1.4,phi:1.1},{l:'5',theta:.6,phi:.5},{l:'6',theta:0,phi:1.55},{l:'7',theta:2.4,phi:1.3},
-];
-function buildAngles(){
-  const el=$('angles');el.innerHTML='';
-  ANGLE_PRESETS.forEach((a,i)=>{
-    const b=document.createElement('button');b.textContent=a.l;if(i===0)b.className='on';
-    b.onclick=()=>{[...el.children].forEach(c=>c.className='');b.className='on';
-      orbit.theta=a.theta;orbit.phi=a.phi;updateCam();};
-    el.appendChild(b);
-  });
-}
 $('tab3d').onclick=()=>{$('tab3d').classList.add('on');};
 $('playbtn').onclick=()=>{
   if(!skelPlaying){animT=0;}  // restart from wind-up
@@ -1800,7 +1794,6 @@ async function fetchPinFromCloud(){
    BOOT
    ───────────────────────────────────────────────────────────── */
 (function boot(){
-  buildAngles();
   fetchPinFromCloud().then(()=>{
     if(!cfg.facilityPinHash)
       document.getElementById('lock-setup-link').style.display='block';
