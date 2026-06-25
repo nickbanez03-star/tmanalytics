@@ -1143,10 +1143,11 @@ function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show')
 
 /* ── Boot ────────────────────────────────────────────────── */
 (function(){
-  const savedUrl=localStorage.getItem('tma_apiUrl')||'';
-  STATE.apiUrl=savedUrl||'';
-  $('set-api').value=savedUrl||CLOUD_URL;
-  if($('login-api-url'))$('login-api-url').value=savedUrl||'';
+  const savedUrl=localStorage.getItem('tma_apiUrl')||CLOUD_URL;
+  STATE.apiUrl=savedUrl;
+  localStorage.setItem('tma_apiUrl',savedUrl);
+  $('set-api').value=savedUrl;
+  if($('login-api-url'))$('login-api-url').value=savedUrl;
 
   const token=localStorage.getItem('tma_token');
   if(token&&savedUrl){
