@@ -152,8 +152,8 @@ input,select,textarea{outline:none;font-family:inherit}
 .sess-timer{font-size:22px;font-weight:900;letter-spacing:.06em;color:var(--accent);
   font-variant-numeric:tabular-nums}
 .sess-stats{display:flex;gap:16px}
-.ss-stat .sv{font-size:16px;font-weight:900;line-height:1}
-.ss-stat .sl{font-size:8px;letter-spacing:.1em;color:var(--muted);font-weight:800}
+.ss-stat .sv{font-size:18px;font-weight:900;line-height:1;color:#fff}
+.ss-stat .sl{font-size:8px;letter-spacing:.1em;color:#8a93a8;font-weight:800}
 .conn-row{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;color:var(--muted)}
 .tb-space{flex:1}
 .tb-btns{display:flex;gap:7px}
@@ -183,33 +183,40 @@ input,select,textarea{outline:none;font-family:inherit}
 .pitem.newest{animation:newslide .4s ease-out}
 @keyframes newslide{0%{transform:translateX(-10px);opacity:0}100%{transform:translateX(0);opacity:1}}
 .pdot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
-.pitem-v{font-size:15px;font-weight:900}
-.pitem-sub{font-size:9px;color:var(--muted);font-weight:700;margin-top:1px}
+.pitem-v{font-size:17px;font-weight:900;color:#fff}
+.pitem-sub{font-size:10px;color:#8a93a8;font-weight:700;margin-top:1px}
 .pitem-res{margin-left:auto;font-size:9px;font-weight:800;padding:2px 5px;border-radius:4px}
 .plist-empty{padding:30px 12px;text-align:center;color:var(--muted);font-size:11px;line-height:1.8}
 .plist-empty .ei{font-size:28px;margin-bottom:8px;display:block}
 
 /* center */
 .center{display:flex;flex-direction:column;min-height:0;overflow:hidden;background:var(--surface)}
-.hero-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);
-  border-bottom:1px solid var(--border);flex:0 0 auto}
-.hero-cell{background:var(--surface);padding:13px 14px;position:relative;overflow:hidden}
-.hero-cell::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
-.hero-cell.c0::after{background:var(--accent)}
-.hero-cell.c1::after{background:var(--blue)}
-.hero-cell.c2::after{background:var(--green)}
-.hero-cell.c3::after{background:var(--yellow)}
-.h-lbl{font-size:9px;letter-spacing:.13em;color:var(--muted);font-weight:800;margin-bottom:3px}
-.h-val{font-size:32px;font-weight:900;line-height:1}
-.h-val small{font-size:13px;color:var(--muted);font-weight:700;margin-left:2px}
-.h-trend{font-size:10px;font-weight:700;margin-top:2px;min-height:14px}
+.hero-row{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--border);
+  border-bottom:2px solid var(--border);flex:0 0 auto}
+.hero-cell{background:#181c28;padding:14px 16px;position:relative;overflow:hidden;border-top:3px solid transparent}
+.hero-cell.c0{border-top-color:var(--accent)}
+.hero-cell.c1{border-top-color:var(--blue)}
+.hero-cell.c2{border-top-color:var(--green)}
+.hero-cell.c3{border-top-color:var(--yellow)}
+.h-lbl{font-size:9px;letter-spacing:.13em;color:#8a93a8;font-weight:800;margin-bottom:4px}
+.h-val{font-size:42px;font-weight:900;line-height:1;color:#ffffff}
+.h-val small{font-size:14px;color:#8a93a8;font-weight:700;margin-left:3px}
+.h-trend{font-size:11px;font-weight:700;margin-top:4px;min-height:15px}
 .h-trend.up{color:var(--green)} .h-trend.dn{color:var(--red)}
+
+/* full-width secondary metrics band */
+.stats-row{display:grid;grid-template-columns:repeat(11,1fr);gap:1px;background:var(--border);
+  border-top:1px solid var(--border);flex:0 0 auto;width:100%}
+.stats-cell{background:#141720;padding:9px 12px}
+.stats-lbl{font-size:8px;letter-spacing:.11em;color:#6b7585;font-weight:800;margin-bottom:3px}
+.stats-val{font-size:20px;font-weight:900;color:#fff;line-height:1}
+.stats-val small{font-size:9px;color:#6b7585;font-weight:700;margin-left:2px}
 .plots-row{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);flex:0 0 auto}
 .plot-card{background:var(--surface);padding:9px 12px}
 .plot-lbl{font-size:9px;letter-spacing:.12em;color:var(--muted);font-weight:800;margin-bottom:3px}
 .plot-sub{display:flex;gap:14px;margin-bottom:5px}
 .psub-b{font-size:9px;color:var(--muted);font-weight:700}
-.psub-b strong{display:block;font-size:17px;font-weight:900;color:var(--text);line-height:1}
+.psub-b strong{display:block;font-size:20px;font-weight:900;color:#fff;line-height:1}
 .psub-b.acc strong{color:var(--accent)}
 .trend-card{flex:1;background:var(--surface);padding:9px 12px;border-top:1px solid var(--border);
   min-height:0;display:flex;flex-direction:column}
@@ -244,19 +251,10 @@ input,select,textarea{outline:none;font-family:inherit}
   color:var(--muted);line-height:1.6;z-index:10}
 .traj-info strong{color:var(--text);font-weight:800}
 
-.refpane{flex:1;display:none;flex-direction:column;overflow:hidden;background:#050608}
-.refpane.show{display:flex}
-.cam-grid{flex:1;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr);gap:2px;padding:2px}
-.cam-cell{background:#0d0f14;border-radius:5px;overflow:hidden;position:relative;
-  display:flex;align-items:center;justify-content:center}
-.cam-cell img{width:100%;height:100%;object-fit:cover}
-.cam-lbl{position:absolute;top:0;left:0;right:0;padding:4px 7px;
-  background:linear-gradient(rgba(0,0,0,.8),transparent);font-size:9px;font-weight:800;color:#e2e6ee}
-.cam-ph{color:var(--dim);font-size:10px;text-align:center}
-.cam-uncfg{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:10px;color:var(--muted);text-align:center;padding:20px}
-.cam-uncfg h3{font-size:13px;font-weight:700;color:var(--text)}
-.cam-uncfg p{font-size:10px;max-width:240px;line-height:1.6}
+.vol-placeholder{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;color:var(--muted);text-align:center;padding:20px;background:var(--bg)}
+.vol-placeholder h3{font-size:13px;font-weight:700;color:var(--text)}
+.vol-placeholder p{font-size:10px;max-width:240px;line-height:1.6}
 
 .viewer-foot{padding:7px 10px;background:var(--surface);border-top:1px solid var(--border);
   display:flex;align-items:center;gap:10px}
@@ -580,8 +578,7 @@ input,select,textarea{outline:none;font-family:inherit}
     <div class="viewer">
       <div class="viewer-top">
         <button class="vtab on" id="tab3d">3D + Pitch Path</button>
-        <button class="vtab" id="tabcam">Camera Feeds</button>
-        <div class="v-badge" id="opti-badge">OptiTrack · 7 cams</div>
+        <div class="v-badge" id="opti-badge">360° Volumetric</div>
       </div>
       <div id="scene">
         <div class="traj-info" id="traj-info" style="display:none">
@@ -597,7 +594,6 @@ input,select,textarea{outline:none;font-family:inherit}
         <div class="angles" id="angles"></div>
         <div class="vhint">drag · scroll to zoom</div>
       </div>
-      <div class="refpane" id="refpane"></div>
       <div class="viewer-foot">
         <button class="vplay" id="vplay">⏸</button>
         <div class="scrub"><div class="scrub-fill" id="scrub-fill"></div></div>
@@ -611,9 +607,24 @@ input,select,textarea{outline:none;font-family:inherit}
       </div>
       <div class="stub-note">
         <span class="stag">STUB</span>Skeleton = mock · replace with Motive NatNet/C3D &nbsp;
-        <span class="stag">STUB</span>Cameras = enter Motive IP in ⚙
+        <span class="stag">STUB</span>360° video · orbit any angle &amp; scrub timeline once capture bridge is live
       </div>
     </div>
+  </div>
+
+  <!-- full-width secondary metrics band -->
+  <div class="stats-row" id="stats-band">
+    <div class="stats-cell"><div class="stats-lbl">HORIZ BREAK</div><div class="stats-val" id="s-hb">—<small>"</small></div></div>
+    <div class="stats-cell"><div class="stats-lbl">TRUE SPIN</div><div class="stats-val" id="s-tspin">—<small>rpm</small></div></div>
+    <div class="stats-cell"><div class="stats-lbl">GYRO°</div><div class="stats-val" id="s-gyro">—<small>°</small></div></div>
+    <div class="stats-cell"><div class="stats-lbl">SPIN DIR</div><div class="stats-val" id="s-sdir">—</div></div>
+    <div class="stats-cell"><div class="stats-lbl">H ANGLE</div><div class="stats-val" id="s-hang">—<small>°</small></div></div>
+    <div class="stats-cell"><div class="stats-lbl">R ANGLE</div><div class="stats-val" id="s-rang">—<small>°</small></div></div>
+    <div class="stats-cell"><div class="stats-lbl">R HEIGHT</div><div class="stats-val" id="s-rht">—<small>ft</small></div></div>
+    <div class="stats-cell"><div class="stats-lbl">R SIDE</div><div class="stats-val" id="s-rsd">—<small>ft</small></div></div>
+    <div class="stats-cell"><div class="stats-lbl">R EXT</div><div class="stats-val" id="s-rext">—<small>ft</small></div></div>
+    <div class="stats-cell"><div class="stats-lbl">V APPROACH</div><div class="stats-val" id="s-lat">—<small>°</small></div></div>
+    <div class="stats-cell"><div class="stats-lbl">H APPROACH</div><div class="stats-val" id="s-lon">—<small>°</small></div></div>
   </div>
 
   <div class="seq-strip" id="seq-strip">
@@ -965,21 +976,29 @@ const DEMO_PROFILES=[
 ];
 const KIND_LABEL={bullpen:'BULLPEN',liveab:'LIVE ABS',flatground:'FLAT GROUND'};
 const SIM_PITCHES=[
-  {code:'FF',velo:[92,96],spin:[2250,2450],eff:[92,98],ivb:[15,19],hb:[6,10],  tilt:'12:45'},
-  {code:'SL',velo:[84,88],spin:[2450,2700],eff:[35,52],ivb:[0,4],  hb:[-9,-4], tilt:'9:30'},
-  {code:'CH',velo:[84,88],spin:[1650,1850],eff:[86,93],ivb:[6,9],  hb:[12,16], tilt:'2:00'},
-  {code:'CU',velo:[78,82],spin:[2650,2900],eff:[70,80],ivb:[-13,-9],hb:[-10,-6],tilt:'7:00'}
+  {code:'FF',velo:[92,96],spin:[2250,2450],eff:[92,98],ivb:[15,19],hb:[6,10],  tilt:'12:45',gyro:[10,18],h_angle:[-1.5,1.5], r_angle:[-3.5,-2.0],r_side:[-2.2,-1.0],lat:[-4.5,-3.0],lon:[-1.0,1.0]},
+  {code:'SL',velo:[84,88],spin:[2450,2700],eff:[35,52],ivb:[0,4],  hb:[-9,-4], tilt:'9:30', gyro:[48,62],h_angle:[-4.5,-1.5],r_angle:[-3.0,-1.5],r_side:[-2.5,-1.2],lat:[-2.5,-1.0],lon:[-3.5,-1.0]},
+  {code:'CH',velo:[84,88],spin:[1650,1850],eff:[86,93],ivb:[6,9],  hb:[12,16], tilt:'2:00', gyro:[8,16], h_angle:[1.0,4.0],  r_angle:[-3.5,-2.0],r_side:[-2.0,-0.8],lat:[-3.5,-2.0],lon:[1.0,3.5]},
+  {code:'CU',velo:[78,82],spin:[2650,2900],eff:[70,80],ivb:[-13,-9],hb:[-10,-6],tilt:'7:00',gyro:[12,22],h_angle:[-4.0,-1.0],r_angle:[-2.5,-1.0],r_side:[-2.3,-1.1],lat:[-7.0,-5.0],lon:[-3.0,-0.5]}
 ];
 const rnd=(a,b)=>a+Math.random()*(b-a);
 function simulatePitch(){
   if(!currentSession)return;
   const a=SIM_PITCHES[Math.floor(Math.random()*SIM_PITCHES.length)];
   const lhp=currentPlayer&&currentPlayer.throws==='L';
+  const side=lhp?-1:1;
   addPitch({pitch_type:a.code,velocity:rnd(a.velo[0],a.velo[1]),
     spin_total:rnd(a.spin[0],a.spin[1]),spin_efficiency:rnd(a.eff[0],a.eff[1]),
-    tilt:a.tilt,ivb:rnd(a.ivb[0],a.ivb[1]),hb:rnd(a.hb[0],a.hb[1])*(lhp?-1:1),
-    plate_x:rnd(-1.1,1.1)*(lhp?-1:1),plate_z:rnd(1.4,3.6),
-    extension:rnd(6.0,6.9),release_height:rnd(5.6,6.4),result:'—',timestamp:Date.now()/1000});
+    tilt:a.tilt,ivb:rnd(a.ivb[0],a.ivb[1]),hb:rnd(a.hb[0],a.hb[1])*side,
+    plate_x:rnd(-1.1,1.1)*side,plate_z:rnd(1.4,3.6),
+    extension:rnd(6.0,6.9),release_height:rnd(5.6,6.4),
+    gyro_degree:rnd(a.gyro[0],a.gyro[1]),
+    h_angle:rnd(a.h_angle[0],a.h_angle[1])*side,
+    r_angle:rnd(a.r_angle[0],a.r_angle[1]),
+    r_side:rnd(a.r_side[0],a.r_side[1])*side,
+    latitude:rnd(a.lat[0],a.lat[1]),
+    longitude:rnd(a.lon[0],a.lon[1])*side,
+    result:'—',timestamp:Date.now()/1000});
 }
 let demoBtn=null;
 function showDemoBtn(on){
@@ -1006,6 +1025,15 @@ function beginSession(player,kind,skipWS){
     +` &nbsp;<span style="color:#f26722;font-weight:800">${KIND_LABEL[currentSession.kind]||''}</span>`;
   document.getElementById('screen-profiles').classList.add('hidden');
   document.getElementById('screen-session').classList.remove('hidden');
+  // Lazy-init Three.js now that #scene has real dimensions
+  if(!renderer){
+    try{init3D();}catch(e){console.warn('3D init failed',e);}
+  } else {
+    const h=$('scene');
+    renderer.setSize(h.clientWidth,h.clientHeight);
+    cam3.aspect=h.clientWidth/(h.clientHeight||1);
+    cam3.updateProjectionMatrix();
+  }
   clearInterval(sessInterval);
   sessInterval=setInterval(()=>{
     const s=Math.floor((Date.now()-currentSession.startTime)/1000);
@@ -1052,6 +1080,15 @@ function addPitch(raw){
     result:raw.result||'—',
     rel:raw.release_height?raw.release_height.toFixed(1)+' ft':'—',
     ext:raw.extension?raw.extension.toFixed(1)+' ft':'—',
+    gyro:raw.gyro_degree!=null?Math.round(raw.gyro_degree):null,
+    true_spin:Math.round((raw.spin_total||0)*(raw.spin_efficiency||0)/100),
+    h_angle:raw.h_angle!=null?+parseFloat(raw.h_angle).toFixed(1):null,
+    r_angle:raw.r_angle!=null?+parseFloat(raw.r_angle).toFixed(1):null,
+    r_side:raw.r_side!=null?+parseFloat(raw.r_side).toFixed(2):null,
+    r_ht:raw.release_height?+parseFloat(raw.release_height).toFixed(1):null,
+    r_ext:raw.extension?+parseFloat(raw.extension).toFixed(1):null,
+    lat:raw.latitude!=null?+parseFloat(raw.latitude).toFixed(1):null,
+    lon:raw.longitude!=null?+parseFloat(raw.longitude).toFixed(1):null,
     ts:raw.timestamp||Date.now()/1000,isNew:true,
   };
   PITCHES.push(p);
@@ -1061,7 +1098,7 @@ function addPitch(raw){
   const isPB=p.velo>maxVelo;
   if(isPB)maxVelo=p.velo;
   showFlash(p,isPB);
-  animatePitch3D(p);
+  try{animatePitch3D(p);}catch(e){}
   updateSessStats();
   refresh();
 }
@@ -1131,6 +1168,12 @@ function drawHero(){
     $('h-ivb').innerHTML='—<small>"</small>'; $('h-eff').textContent='—';
     $('h-trend').textContent=''; $('p-ivb').textContent='—'; $('p-hb').textContent='—';
     $('vt-type').textContent='—'; $('vt-res').textContent='—'; $('vt-rel').textContent='—'; $('vt-ext').textContent='—';
+    $('s-hb').innerHTML='—<small>"</small>'; $('s-tspin').innerHTML='—<small>rpm</small>';
+    $('s-gyro').innerHTML='—<small>°</small>'; $('s-sdir').textContent='—';
+    $('s-hang').innerHTML='—<small>°</small>'; $('s-rang').innerHTML='—<small>°</small>';
+    $('s-rht').innerHTML='—<small>ft</small>'; $('s-rsd').innerHTML='—<small>ft</small>';
+    $('s-rext').innerHTML='—<small>ft</small>'; $('s-lat').innerHTML='—<small>°</small>';
+    $('s-lon').innerHTML='—<small>°</small>';
     $('traj-info').style.display='none'; return;
   }
   const p=PITCHES[selIdx];
@@ -1148,6 +1191,20 @@ function drawHero(){
   $('p-hb').textContent=(p.hb>=0?'+':'')+p.hb.toFixed(1)+'"';
   $('vt-type').textContent=p.type; $('vt-res').textContent=p.result;
   $('vt-rel').textContent=p.rel; $('vt-ext').textContent=p.ext;
+  // secondary stats row
+  const fmt=(v,d=1)=>v!=null?((v>=0?'':'')+parseFloat(v).toFixed(d)):'—';
+  const fmts=(v,d=1)=>v!=null?((v>0?'+':'')+parseFloat(v).toFixed(d)):'—';
+  $('s-hb').innerHTML=`${fmts(p.hb)}<small>"</small>`;
+  $('s-tspin').innerHTML=`${p.true_spin?p.true_spin.toLocaleString():'—'}<small>rpm</small>`;
+  $('s-gyro').innerHTML=`${p.gyro!=null?p.gyro:'—'}<small>°</small>`;
+  $('s-sdir').textContent=p.tilt||'—';
+  $('s-hang').innerHTML=`${fmts(p.h_angle)}<small>°</small>`;
+  $('s-rang').innerHTML=`${fmt(p.r_angle)}<small>°</small>`;
+  $('s-rht').innerHTML=`${p.r_ht!=null?p.r_ht.toFixed(1):'—'}<small>ft</small>`;
+  $('s-rsd').innerHTML=`${fmt(p.r_side,2)}<small>ft</small>`;
+  $('s-rext').innerHTML=`${p.r_ext!=null?p.r_ext.toFixed(1):'—'}<small>ft</small>`;
+  $('s-lat').innerHTML=`${fmt(p.lat)}<small>°</small>`;
+  $('s-lon').innerHTML=`${fmts(p.lon)}<small>°</small>`;
   // trajectory info panel
   $('traj-info').style.display='block';
   $('ti-type').textContent=p.type.toUpperCase(); $('ti-type').style.color=p.color;
@@ -1330,9 +1387,9 @@ function init3D(){
   host.appendChild(renderer.domElement);
   scene3=new THREE.Scene();
   cam3=new THREE.PerspectiveCamera(45,host.clientWidth/host.clientHeight,.1,100);
-  scene3.add(new THREE.AmbientLight(0xffffff,.5));
-  const dl=new THREE.DirectionalLight(0xffffff,.9);dl.position.set(3,6,4);scene3.add(dl);
-  const dl2=new THREE.DirectionalLight(0x6688ff,.3);dl2.position.set(-4,3,-3);scene3.add(dl2);
+  scene3.add(new THREE.AmbientLight(0xffffff,.85));
+  const dl=new THREE.DirectionalLight(0xffffff,1.1);dl.position.set(3,6,4);scene3.add(dl);
+  const dl2=new THREE.DirectionalLight(0xffaa66,.5);dl2.position.set(-4,3,-3);scene3.add(dl2);
   scene3.add(new THREE.GridHelper(8,16,0x1e222e,0x12141a));
 
   // Mound + rubber + plate
@@ -1381,15 +1438,16 @@ function init3D(){
 
   /* ── SKELETON ── */
   const g=new THREE.Group();scene3.add(g);
-  const jmat=new THREE.MeshStandardMaterial({color:0xf26722,roughness:.4,metalness:.1});
+  const jmat=new THREE.MeshStandardMaterial({color:0xf26722,emissive:0x661100,roughness:.3,metalness:.1});
+  const headMat=new THREE.MeshStandardMaterial({color:0xffd9c2,emissive:0x331100,roughness:.5});
   JOINTS.forEach(j=>{
-    const m=new THREE.Mesh(new THREE.SphereGeometry(j==='head'?.085:.05,16,16),
-      j==='head'?new THREE.MeshStandardMaterial({color:0xffd9c2,roughness:.6}):jmat);
+    const r=j==='head'?.10:j.includes('Wr')?.055:.07;
+    const m=new THREE.Mesh(new THREE.SphereGeometry(r,16,16),j==='head'?headMat:jmat);
     g.add(m);jMesh[j]=m;
   });
   bGeo=new THREE.BufferGeometry();
   bGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(BONES.length*6),3));
-  g.add(new THREE.LineSegments(bGeo,new THREE.LineBasicMaterial({color:0x3b5abf,opacity:.8,transparent:true})));
+  g.add(new THREE.LineSegments(bGeo,new THREE.LineBasicMaterial({color:0xf26722,linewidth:2,opacity:.9,transparent:true})));
 
   // orbit
   host.addEventListener('mousedown',e=>{orbit.drag=true;orbit.px=e.clientX;orbit.py=e.clientY;});
@@ -1424,6 +1482,12 @@ function applyPose(P){
 
 /* ── PITCH TRAJECTORY ANIMATION ── */
 function animatePitch3D(p){
+  // Restart skeleton delivery from wind-up, snap to side view, auto-orbit for 6s
+  animT=0; skelPlaying=true;
+  $('playbtn').textContent='⏸ Skel'; $('vplay').textContent='⏸';
+  orbit.theta=1.7; orbit.phi=1.05; orbit.r=4.5; updateCam();
+  startAutoOrbit(6000);
+
   const ft=0.3048;
   // Release point: pitcher's hand at release phase (~wrist position)
   const relX = (currentPlayer&&currentPlayer.throws==='L'?-.1:.1);
@@ -1499,10 +1563,23 @@ function flashZone(color){
   },30);
 }
 
+let autoOrbitId=null;
+function startAutoOrbit(ms){
+  if(autoOrbitId)clearInterval(autoOrbitId);
+  autoOrbitId=setInterval(()=>{orbit.theta+=.006;updateCam();},16);
+  setTimeout(()=>{clearInterval(autoOrbitId);autoOrbitId=null;},ms);
+}
+
 function animate3D(){
   requestAnimationFrame(animate3D);
-  // Skeleton
-  if(skelPlaying){animT+=.004;if(animT>1)animT=0;}
+  // Skeleton — play through delivery once, then hold at release pose
+  if(skelPlaying){
+    animT+=.004;
+    if(animT>=1){
+      animT=1;skelPlaying=false;
+      $('playbtn').textContent='▶ Skel';$('vplay').textContent='▶';
+    }
+  }
   applyPose(poseAt(animT));
   const ph=Math.min(PHASES.length-1,Math.floor(animT*(POSES.length-1)));
   $('phase-lbl').textContent=PHASES[ph];
@@ -1542,34 +1619,19 @@ function buildAngles(){
     el.appendChild(b);
   });
 }
-$('tab3d').onclick=()=>{$('tab3d').classList.add('on');$('tabcam').classList.remove('on');$('scene').style.display='flex';$('refpane').classList.remove('show');};
-$('tabcam').onclick=()=>{$('tabcam').classList.add('on');$('tab3d').classList.remove('on');$('scene').style.display='none';$('refpane').classList.add('show');};
-$('playbtn').onclick=()=>{skelPlaying=!skelPlaying;$('playbtn').textContent=(skelPlaying?'⏸':'▶')+' Skel';$('vplay').textContent=skelPlaying?'⏸':'▶';};
+$('tab3d').onclick=()=>{$('tab3d').classList.add('on');};
+$('playbtn').onclick=()=>{
+  if(!skelPlaying){animT=0;}  // restart from wind-up
+  skelPlaying=!skelPlaying;
+  $('playbtn').textContent=(skelPlaying?'⏸':'▶')+' Skel';
+  $('vplay').textContent=skelPlaying?'⏸':'▶';
+};
 $('vplay').onclick=()=>$('playbtn').click();
 $('resetcam').onclick=()=>{orbit.theta=.6;orbit.phi=1.15;orbit.r=4.5;updateCam();};
 
 /* ─────────────────────────────────────────────────────────────
    CAMERA GRID
    ───────────────────────────────────────────────────────────── */
-function buildCamGrid(){
-  const pane=$('refpane');
-  if(!cfg.mjpegBase){
-    pane.innerHTML=`<div class="cam-uncfg"><div style="font-size:36px">📷</div>
-      <h3>Cameras Not Configured</h3>
-      <p>Enter the Motive MJPEG base URL in ⚙ Settings after confirming Motive streaming mode.</p>
-      <button class="btn btn-ghost" onclick="toggleSettings()" style="margin-top:8px">Open Settings</button>
-    </div>`;return;
-  }
-  let html='<div class="cam-grid">';
-  for(let i=1;i<=7;i++){
-    html+=`<div class="cam-cell">
-      <img src="${cfg.mjpegBase}${i}" onerror="this.style.display='none'"/>
-      <div class="cam-lbl">CAM ${i}</div>
-      <div class="cam-ph">📷<br/>CAM ${i}</div>
-    </div>`;
-  }
-  html+='</div>';pane.innerHTML=html;
-}
 
 /* ─────────────────────────────────────────────────────────────
    END SESSION + REPORT
@@ -1711,7 +1773,7 @@ async function saveSettings(){
   cfg.piBase=$('cfg-pibase').value.trim();
   cfg.lockMin=parseInt($('cfg-lock-min').value)||15;
   STORE.save('tm-cfg',cfg);
-  toggleSettings();buildCamGrid();
+  toggleSettings();
   if(currentSession)connectWS();
 }
 function pushPinToCloud(pinHash){
@@ -1738,7 +1800,7 @@ async function fetchPinFromCloud(){
    BOOT
    ───────────────────────────────────────────────────────────── */
 (function boot(){
-  buildAngles();buildCamGrid();init3D();
+  buildAngles();
   fetchPinFromCloud().then(()=>{
     if(!cfg.facilityPinHash)
       document.getElementById('lock-setup-link').style.display='block';

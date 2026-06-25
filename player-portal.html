@@ -482,10 +482,10 @@ function jitter(base,spread){return base+(rng()*2-1)*spread;}
 
 /* ── Demo pitcher arsenal (target means) ─────────────────── */
 const ARSENAL={
-  FF:{velo:94.2,spin:2380,eff:96,ivb:17.8,hb:7.5,ext:6.6,usage:.42},
-  SL:{velo:86.4,spin:2620,eff:42,ivb:1.1,hb:-6.8,ext:6.4,usage:.24},
-  CH:{velo:86.1,spin:1720,eff:90,ivb:7.2,hb:14.6,ext:6.6,usage:.18},
-  CU:{velo:79.8,spin:2780,eff:74,ivb:-11.4,hb:-8.2,ext:6.2,usage:.16}
+  FF:{velo:94.2,spin:2380,eff:96,ivb:17.8,hb:7.5,ext:6.6,usage:.42,gyro:15,r_ht:6.1,r_side:-1.8,r_angle:-3.2,h_angle:0.3,lat:-3.8,lon:0.2},
+  SL:{velo:86.4,spin:2620,eff:42,ivb:1.1, hb:-6.8,ext:6.4,usage:.24,gyro:55,r_ht:6.0,r_side:-1.9,r_angle:-3.0,h_angle:-2.8,lat:-1.8,lon:-2.1},
+  CH:{velo:86.1,spin:1720,eff:90,ivb:7.2, hb:14.6,ext:6.6,usage:.18,gyro:12,r_ht:6.0,r_side:-1.7,r_angle:-3.3,h_angle:2.2, lat:-2.8,lon:1.8},
+  CU:{velo:79.8,spin:2780,eff:74,ivb:-11.4,hb:-8.2,ext:6.2,usage:.16,gyro:18,r_ht:5.9,r_side:-1.9,r_angle:-2.5,h_angle:-2.2,lat:-6.0,lon:-1.5}
 };
 
 /* ── Live-AB outcomes (only logged for Live AB sessions) ─── */
@@ -515,7 +515,12 @@ function recomputeTypes(s){
   for(const k in types){const ps=types[k]._p,avg=f=>ps.reduce((a,p)=>a+p[f],0)/ps.length;
     types[k].velo=+avg('velo').toFixed(1); types[k].spin=Math.round(avg('spin'));
     types[k].eff=Math.round(avg('eff'));   types[k].ivb=+avg('ivb').toFixed(1);
-    types[k].hb=+avg('hb').toFixed(1);     types[k].ext=+avg('ext').toFixed(2);
+    types[k].hb=+avg('hb').toFixed(1);    types[k].ext=+avg('ext').toFixed(2);
+    types[k].true_spin=Math.round(types[k].spin*types[k].eff/100);
+    types[k].gyro=Math.round(avg('gyro')||0);
+    types[k].r_ht=+avg('r_ht').toFixed(1);   types[k].r_side=+avg('r_side').toFixed(2);
+    types[k].r_angle=+avg('r_angle').toFixed(1); types[k].h_angle=+avg('h_angle').toFixed(1);
+    types[k].lat=+avg('lat').toFixed(1);   types[k].lon=+avg('lon').toFixed(1);
     types[k].tilt=TILT[k]; types[k].pitches=ps;}
   s.types=types; s.count=s.log.length;
 }
@@ -533,13 +538,22 @@ function buildSessions(){
       const n=Math.max(3,Math.round((20+rng()*16)*a.usage*2));
       for(let i=0;i<n;i++){
         const px=+jitter(0,0.85).toFixed(2), pz=+jitter(2.45,0.8).toFixed(2);
+        const _spin=Math.round(jitter(a.spin,90));
+        const _eff=Math.round(jitter(a.eff,4));
         pool.push({type:k,typeAuto:k,corrected:false,
           velo:+jitter(a.velo+trend,1.1).toFixed(1),
-          spin:Math.round(jitter(a.spin,90)),
-          eff:Math.round(jitter(a.eff,4)),
+          spin:_spin,eff:_eff,
+          true_spin:Math.round(_spin*_eff/100),
           ivb:+jitter(a.ivb,1.4).toFixed(1),
           hb:+jitter(a.hb,1.6).toFixed(1),
           ext:+jitter(a.ext,0.12).toFixed(2),
+          gyro:Math.round(jitter(a.gyro,3)),
+          r_ht:+jitter(a.r_ht,0.15).toFixed(1),
+          r_side:+jitter(a.r_side,0.2).toFixed(2),
+          r_angle:+jitter(a.r_angle,0.4).toFixed(1),
+          h_angle:+jitter(a.h_angle,0.8).toFixed(1),
+          lat:+jitter(a.lat,0.5).toFixed(1),
+          lon:+jitter(a.lon,0.6).toFixed(1),
           px,pz});
       }
     }
@@ -805,15 +819,25 @@ function renderSession(tab){
 function sessTabOverview(s){
   let rows='';
   for(const k in s.types){const t=s.types[k];
+    const fmts=(v,d=1)=>v!=null?(v>0?'+':'')+parseFloat(v).toFixed(d):'—';
+    const fmt=(v,d=1)=>v!=null?parseFloat(v).toFixed(d):'—';
     rows+=`<div class="card"><h4 style="color:${PITCH[k].col}">${PITCH[k].name.toUpperCase()} · ${t.count} thrown</h4>
       <div class="ts-nums" style="grid-template-columns:repeat(4,1fr)">
         <div class="tsn"><div class="v">${t.velo}</div><div class="l">VELO</div></div>
-        <div class="tsn"><div class="v">${t.spin}</div><div class="l">SPIN</div></div>
-        <div class="tsn"><div class="v">${t.eff}%</div><div class="l">EFF</div></div>
-        <div class="tsn"><div class="v">${t.tilt}</div><div class="l">TILT</div></div>
+        <div class="tsn"><div class="v">${t.spin}</div><div class="l">TOTAL SPIN</div></div>
+        <div class="tsn"><div class="v">${t.eff}%</div><div class="l">SPIN EFF</div></div>
+        <div class="tsn"><div class="v">${t.tilt}</div><div class="l">SPIN DIR</div></div>
+        <div class="tsn"><div class="v">${t.true_spin!=null?t.true_spin:'—'}</div><div class="l">TRUE SPIN</div></div>
+        <div class="tsn"><div class="v">${t.gyro!=null?t.gyro+'°':'—'}</div><div class="l">GYRO°</div></div>
         <div class="tsn"><div class="v">${t.ivb}"</div><div class="l">IVB</div></div>
         <div class="tsn"><div class="v">${t.hb}"</div><div class="l">HB</div></div>
-        <div class="tsn"><div class="v">${t.ext}'</div><div class="l">EXT</div></div>
+        <div class="tsn"><div class="v">${fmts(t.h_angle)}°</div><div class="l">H ANGLE</div></div>
+        <div class="tsn"><div class="v">${fmt(t.r_angle)}°</div><div class="l">R ANGLE</div></div>
+        <div class="tsn"><div class="v">${fmt(t.r_ht)}'</div><div class="l">R HEIGHT</div></div>
+        <div class="tsn"><div class="v">${fmt(t.r_side,2)}'</div><div class="l">R SIDE</div></div>
+        <div class="tsn"><div class="v">${t.ext}'</div><div class="l">R EXT</div></div>
+        <div class="tsn"><div class="v">${fmt(t.lat)}°</div><div class="l">V APPROACH</div></div>
+        <div class="tsn"><div class="v">${fmts(t.lon)}°</div><div class="l">H APPROACH</div></div>
         <div class="tsn"><div class="v">${Math.round(t.count/s.count*100)}%</div><div class="l">USAGE</div></div>
       </div></div>`;}
   return `<div class="detail-grid">${rows}</div>`;
@@ -955,17 +979,22 @@ function setOutcome(seq,k){
 
 function pitchSpecsHTML(p){
   const cell=(v,l)=>`<div class="tsn"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+  const fmt=(v,d=1)=>v!=null?parseFloat(v).toFixed(d):'—';
+  const fmts=(v,d=1)=>v!=null?(v>0?'+':'')+parseFloat(v).toFixed(d):'—';
   return `<div class="ts-nums" style="grid-template-columns:repeat(4,1fr)">
-    ${cell(p.velo,'VELO MPH')}${cell(p.spin,'SPIN RPM')}${cell(p.eff+'%','SPIN EFF')}${cell(TILT[p.type],'TILT')}
-    ${cell(p.ivb+'"','IVB')}${cell(p.hb+'"','H-BREAK')}${cell(p.ext+"'",'EXTENSION')}${cell(p.iz?'YES':'NO','IN ZONE')}</div>`;
+    ${cell(p.velo,'VELO MPH')}${cell(p.spin,'SPIN RPM')}${cell(p.eff+'%','SPIN EFF')}${cell(TILT[p.type],'SPIN DIR')}
+    ${cell(p.true_spin!=null?p.true_spin:'—','TRUE SPIN')}${cell(p.gyro!=null?p.gyro+'°':'—','GYRO°')}${cell(p.ivb+'"','IVB')}${cell(p.hb+'"','H-BREAK')}
+    ${cell(fmts(p.h_angle)+'°','H ANGLE')}${cell(fmt(p.r_angle)+'°','R ANGLE')}${cell(fmt(p.r_ht)+"'","R HEIGHT")}${cell(fmt(p.r_side,2)+"'","R SIDE")}
+    ${cell(p.ext+"'",'R EXT')}${cell(fmt(p.lat)+'°','V APPROACH')}${cell(fmts(p.lon)+'°','H APPROACH')}${cell(p.iz?'YES':'NO','IN ZONE')}</div>`;
 }
 function optitrackHTML(p){
   return `${skeletonSVG(p)}
     <div style="text-align:center;font-size:9px;color:var(--muted);font-weight:700;margin:8px 0 6px">
       ▸ 3D skeleton · drag-to-orbit goes live once the Motive NatNet bridge is up</div>
-    <div class="video-grid" style="grid-template-columns:repeat(4,1fr);gap:5px">
-      ${[1,2,3,4,5,6,7].map(n=>`<div class="video-cell" style="font-size:8px">CAM ${n}</div>`).join('')}
-      <div class="video-cell" style="font-size:8px;color:var(--accent);border:1px solid rgba(242,103,34,.3)">▸ 3D</div></div>`;
+    <div style="background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:12px;margin-top:6px;text-align:center">
+      <div style="font-size:11px;font-weight:800;color:var(--text);margin-bottom:4px">360° VOLUMETRIC VIDEO</div>
+      <div style="font-size:10px;color:var(--muted);line-height:1.6">Multi-camera array produces a full orbit-and-scrub replay of every pitch — drag to any angle, scrub the timeline frame by frame. Goes live once the capture bridge is connected.</div>
+    </div>`;
 }
 /* Offline placeholder: a pitcher skeleton in release pose (mirrors for LHP).
    Replaced by the live orbitable Motive skeleton when the bridge is wired. */
