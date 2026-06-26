@@ -870,6 +870,7 @@ const TYPE_MAP={
   FT:{label:'Sinker',   short:'SI',color:'#ed8936'},
   SI:{label:'Sinker',   short:'SI',color:'#ed8936'},
   SL:{label:'Slider',   short:'SL',color:'#3b82f6'},
+  ST:{label:'Sweeper',  short:'ST',color:'#6366f1'},
   CU:{label:'Curveball',short:'CU',color:'#10b981'},
   KC:{label:'Knuckle-C',short:'KC',color:'#10b981'},
   CH:{label:'Changeup', short:'CH',color:'#94a3b8'},
@@ -989,8 +990,9 @@ const DEMO_PROFILES=[
 ];
 const KIND_LABEL={bullpen:'BULLPEN',liveab:'LIVE ABS',flatground:'FLAT GROUND'};
 const SIM_PITCHES=[
-  {code:'FF',velo:[92,96],spin:[2250,2450],eff:[92,98],ivb:[15,19],hb:[6,10],  tilt:'12:45',gyro:[10,18],h_angle:[-1.5,1.5], r_angle:[-3.5,-2.0],r_side:[-2.2,-1.0],lat:[-4.5,-3.0],lon:[-1.0,1.0]},
+  {code:'FF',velo:[92,97],spin:[2250,2480],eff:[92,98],ivb:[15,20],hb:[6,10],  tilt:'12:45',gyro:[10,18],h_angle:[-1.5,1.5], r_angle:[-3.5,-2.0],r_side:[-2.2,-1.0],lat:[-4.5,-3.0],lon:[-1.0,1.0]},
   {code:'SL',velo:[84,88],spin:[2450,2700],eff:[35,52],ivb:[0,4],  hb:[-9,-4], tilt:'9:30', gyro:[48,62],h_angle:[-4.5,-1.5],r_angle:[-3.0,-1.5],r_side:[-2.5,-1.2],lat:[-2.5,-1.0],lon:[-3.5,-1.0]},
+  {code:'ST',velo:[82,86],spin:[2580,2780],eff:[28,40],ivb:[-2,2], hb:[-19,-13],tilt:'8:00', gyro:[55,72],h_angle:[-6.0,-3.0],r_angle:[-2.8,-1.5],r_side:[-2.4,-1.1],lat:[-2.0,-0.5],lon:[-5.5,-3.0]},
   {code:'CH',velo:[84,88],spin:[1650,1850],eff:[86,93],ivb:[6,9],  hb:[12,16], tilt:'2:00', gyro:[8,16], h_angle:[1.0,4.0],  r_angle:[-3.5,-2.0],r_side:[-2.0,-0.8],lat:[-3.5,-2.0],lon:[1.0,3.5]},
   {code:'CU',velo:[78,82],spin:[2650,2900],eff:[70,80],ivb:[-13,-9],hb:[-10,-6],tilt:'7:00',gyro:[12,22],h_angle:[-4.0,-1.0],r_angle:[-2.5,-1.0],r_side:[-2.3,-1.1],lat:[-7.0,-5.0],lon:[-3.0,-0.5]}
 ];
@@ -1189,14 +1191,16 @@ function renderSeq(){
 /* ─────────────────────────────────────────────────────────────
    MLB COMPARISON
    ───────────────────────────────────────────────────────────── */
+// 2025 Statcast league averages (Baseball Savant) — all MLB starters + relievers
 const MLB_BENCH={
-  FF:{name:'4-SEAM FASTBALL', velo:{m:93.9,s:2.5},spin:{m:2255,s:220},ivb:{m:15.8,s:3.5},hb:{m:7.2,s:3.8},tspin:{m:2120,s:210}},
-  SL:{name:'SLIDER',         velo:{m:85.3,s:2.8},spin:{m:2498,s:285},ivb:{m:1.5,s:3.2}, hb:{m:5.4,s:3.5}, tspin:{m:1020,s:200}},
-  CH:{name:'CHANGEUP',       velo:{m:84.9,s:2.6},spin:{m:1771,s:190},ivb:{m:6.1,s:3.0}, hb:{m:8.7,s:3.4}, tspin:{m:1580,s:175}},
-  CU:{name:'CURVEBALL',      velo:{m:79.2,s:2.7},spin:{m:2484,s:310},ivb:{m:9.6,s:3.8}, hb:{m:6.4,s:3.9}, tspin:{m:1790,s:250}},
-  SI:{name:'SINKER',         velo:{m:93.1,s:2.4},spin:{m:2089,s:215},ivb:{m:5.2,s:3.0}, hb:{m:14.2,s:3.6},tspin:{m:1960,s:200}},
-  FC:{name:'CUTTER',         velo:{m:89.3,s:2.6},spin:{m:2363,s:255},ivb:{m:6.7,s:2.8}, hb:{m:4.1,s:3.2}, tspin:{m:1770,s:220}},
-  FS:{name:'SPLITTER',       velo:{m:85.0,s:2.6},spin:{m:1490,s:190},ivb:{m:2.0,s:3.0}, hb:{m:9.0,s:3.5}, tspin:{m:1320,s:180}},
+  FF:{name:'4-SEAM FASTBALL', velo:{m:94.3,s:2.5},spin:{m:2268,s:225},ivb:{m:16.1,s:3.5},hb:{m:7.4,s:3.8},tspin:{m:2135,s:215}},
+  SL:{name:'SLIDER',         velo:{m:85.8,s:2.8},spin:{m:2512,s:285},ivb:{m:1.6,s:3.2}, hb:{m:5.8,s:3.5}, tspin:{m:1035,s:200}},
+  ST:{name:'SWEEPER',        velo:{m:83.9,s:2.5},spin:{m:2658,s:270},ivb:{m:0.6,s:3.0}, hb:{m:16.5,s:3.2},tspin:{m:985,s:185}},
+  CH:{name:'CHANGEUP',       velo:{m:85.3,s:2.6},spin:{m:1782,s:190},ivb:{m:6.6,s:3.0}, hb:{m:9.3,s:3.4}, tspin:{m:1598,s:175}},
+  CU:{name:'CURVEBALL',      velo:{m:79.7,s:2.7},spin:{m:2503,s:310},ivb:{m:10.1,s:3.8},hb:{m:6.7,s:3.9}, tspin:{m:1808,s:250}},
+  SI:{name:'SINKER',         velo:{m:93.9,s:2.4},spin:{m:2108,s:215},ivb:{m:5.6,s:3.0}, hb:{m:14.6,s:3.6},tspin:{m:1985,s:200}},
+  FC:{name:'CUTTER',         velo:{m:89.9,s:2.6},spin:{m:2395,s:255},ivb:{m:6.9,s:2.8}, hb:{m:4.3,s:3.2}, tspin:{m:1796,s:220}},
+  FS:{name:'SPLITTER',       velo:{m:86.2,s:2.6},spin:{m:1515,s:190},ivb:{m:2.3,s:3.0}, hb:{m:10.1,s:3.5},tspin:{m:1345,s:180}},
 };
 // ivb and hb benchmarks use absolute value (more break = higher %)
 function normPct(x,m,s){
