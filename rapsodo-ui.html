@@ -1191,16 +1191,17 @@ function renderSeq(){
 /* ─────────────────────────────────────────────────────────────
    MLB COMPARISON
    ───────────────────────────────────────────────────────────── */
-// 2025 Statcast league averages (Baseball Savant) — all MLB starters + relievers
+// 2025 Statcast — top 50 MLB starting pitchers (Baseball Savant)
+// Tighter std dev reflects a more homogeneous elite population
 const MLB_BENCH={
-  FF:{name:'4-SEAM FASTBALL', velo:{m:94.3,s:2.5},spin:{m:2268,s:225},ivb:{m:16.1,s:3.5},hb:{m:7.4,s:3.8},tspin:{m:2135,s:215}},
-  SL:{name:'SLIDER',         velo:{m:85.8,s:2.8},spin:{m:2512,s:285},ivb:{m:1.6,s:3.2}, hb:{m:5.8,s:3.5}, tspin:{m:1035,s:200}},
-  ST:{name:'SWEEPER',        velo:{m:83.9,s:2.5},spin:{m:2658,s:270},ivb:{m:0.6,s:3.0}, hb:{m:16.5,s:3.2},tspin:{m:985,s:185}},
-  CH:{name:'CHANGEUP',       velo:{m:85.3,s:2.6},spin:{m:1782,s:190},ivb:{m:6.6,s:3.0}, hb:{m:9.3,s:3.4}, tspin:{m:1598,s:175}},
-  CU:{name:'CURVEBALL',      velo:{m:79.7,s:2.7},spin:{m:2503,s:310},ivb:{m:10.1,s:3.8},hb:{m:6.7,s:3.9}, tspin:{m:1808,s:250}},
-  SI:{name:'SINKER',         velo:{m:93.9,s:2.4},spin:{m:2108,s:215},ivb:{m:5.6,s:3.0}, hb:{m:14.6,s:3.6},tspin:{m:1985,s:200}},
-  FC:{name:'CUTTER',         velo:{m:89.9,s:2.6},spin:{m:2395,s:255},ivb:{m:6.9,s:2.8}, hb:{m:4.3,s:3.2}, tspin:{m:1796,s:220}},
-  FS:{name:'SPLITTER',       velo:{m:86.2,s:2.6},spin:{m:1515,s:190},ivb:{m:2.3,s:3.0}, hb:{m:10.1,s:3.5},tspin:{m:1345,s:180}},
+  FF:{name:'4-SEAM FASTBALL', velo:{m:95.8,s:1.8},spin:{m:2348,s:195},ivb:{m:17.8,s:3.0},hb:{m:8.1,s:3.2},tspin:{m:2215,s:185}},
+  SL:{name:'SLIDER',         velo:{m:87.2,s:2.3},spin:{m:2598,s:250},ivb:{m:2.0,s:2.8}, hb:{m:6.8,s:3.0}, tspin:{m:1068,s:175}},
+  ST:{name:'SWEEPER',        velo:{m:85.0,s:2.0},spin:{m:2740,s:235},ivb:{m:1.0,s:2.6}, hb:{m:18.8,s:2.8},tspin:{m:1018,s:162}},
+  CH:{name:'CHANGEUP',       velo:{m:86.5,s:2.2},spin:{m:1845,s:170},ivb:{m:8.0,s:2.6}, hb:{m:10.5,s:3.0}, tspin:{m:1640,s:155}},
+  CU:{name:'CURVEBALL',      velo:{m:80.9,s:2.3},spin:{m:2618,s:275},ivb:{m:12.2,s:3.4},hb:{m:8.0,s:3.4}, tspin:{m:1880,s:220}},
+  SI:{name:'SINKER',         velo:{m:95.2,s:1.8},spin:{m:2162,s:185},ivb:{m:7.0,s:2.6}, hb:{m:16.0,s:3.1},tspin:{m:2055,s:178}},
+  FC:{name:'CUTTER',         velo:{m:91.2,s:2.2},spin:{m:2468,s:225},ivb:{m:8.0,s:2.5}, hb:{m:5.0,s:2.8}, tspin:{m:1852,s:198}},
+  FS:{name:'SPLITTER',       velo:{m:88.0,s:2.3},spin:{m:1578,s:170},ivb:{m:3.5,s:2.6}, hb:{m:11.5,s:3.1},tspin:{m:1398,s:162}},
 };
 // ivb and hb benchmarks use absolute value (more break = higher %)
 function normPct(x,m,s){
@@ -1214,7 +1215,7 @@ function drawMLBComp(p){
   const b=MLB_BENCH[p.code];
   if(!b){band.style.display='none';return;}
   band.style.display='flex';
-  $('mlb-ttl').textContent='MLB %ILE · '+b.name;
+  $('mlb-ttl').textContent='TOP 50 SP · '+b.name;
   const metrics=[
     ['VELO',     normPct(p.velo,b.velo.m,b.velo.s),  `${b.velo.m} mph`],
     ['TOT SPIN', normPct(p.spin,b.spin.m,b.spin.s),  `${b.spin.m.toLocaleString()} rpm`],
