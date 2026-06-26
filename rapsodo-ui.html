@@ -207,6 +207,19 @@ input,select,textarea{outline:none;font-family:inherit}
 /* full-width secondary metrics band */
 .stats-row{display:grid;grid-template-columns:repeat(11,1fr);gap:1px;background:var(--border);
   border-top:1px solid var(--border);flex:0 0 auto;width:100%}
+
+/* MLB comparison band */
+.mlb-band{display:flex;align-items:center;background:#090b11;border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);flex:0 0 auto;padding:5px 12px;overflow:hidden}
+.mlb-ttl{font-size:8px;font-weight:800;letter-spacing:.14em;color:var(--accent);white-space:nowrap;
+  padding-right:10px;border-right:1px solid var(--border2);margin-right:10px;flex-shrink:0;line-height:1.4}
+.mlb-item{display:flex;flex-direction:column;align-items:center;padding:4px 10px;
+  border-right:1px solid var(--border2);flex-shrink:0}
+.mlb-name{font-size:7px;letter-spacing:.1em;color:#6b7585;font-weight:800;margin-bottom:2px}
+.mlb-pct{font-size:19px;font-weight:900;line-height:1}
+.mlb-pct-suf{font-size:8px;font-weight:800;margin-left:1px}
+.mlb-avg-lbl{font-size:7px;color:#3a4050;font-weight:600;margin-top:1px;white-space:nowrap}
+.pe{color:#22c55e}.pa{color:#3b82f6}.pm{color:#eab308}.pb{color:#ef4444}
 .stats-cell{background:#141720;padding:9px 12px}
 .stats-lbl{font-size:8px;letter-spacing:.11em;color:#6b7585;font-weight:800;margin-bottom:3px}
 .stats-val{font-size:20px;font-weight:900;color:#fff;line-height:1}
@@ -233,7 +246,7 @@ input,select,textarea{outline:none;font-family:inherit}
 .vtab.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .v-badge{font-size:9px;color:var(--dim);margin-left:auto;letter-spacing:.04em}
 #scene{flex:1;position:relative;min-height:0;display:flex;background:var(--bg)}
-#scene canvas{display:block}
+#scene canvas{display:block;position:absolute;top:0;left:0;width:100%;height:100%}
 .vctrl{position:absolute;right:8px;top:8px;display:flex;gap:5px;z-index:10;flex-wrap:wrap;max-width:160px;justify-content:flex-end}
 .vctrl button{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);
   color:var(--text);border-radius:6px;font-size:10px;font-weight:700;padding:4px 8px}
@@ -619,6 +632,12 @@ input,select,textarea{outline:none;font-family:inherit}
     <div class="stats-cell"><div class="stats-lbl">R EXT</div><div class="stats-val" id="s-rext">—<small>ft</small></div></div>
     <div class="stats-cell"><div class="stats-lbl">V APPROACH</div><div class="stats-val" id="s-lat">—<small>°</small></div></div>
     <div class="stats-cell"><div class="stats-lbl">H APPROACH</div><div class="stats-val" id="s-lon">—<small>°</small></div></div>
+  </div>
+
+  <!-- MLB percentile comparison -->
+  <div class="mlb-band" id="mlb-band" style="display:none">
+    <div class="mlb-ttl" id="mlb-ttl">MLB %ILE</div>
+    <div id="mlb-items" style="display:flex;flex-wrap:nowrap;overflow:hidden"></div>
   </div>
 
   <div class="seq-strip" id="seq-strip">
@@ -1167,6 +1186,47 @@ function renderSeq(){
   strip.scrollLeft=strip.scrollWidth;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   MLB COMPARISON
+   ───────────────────────────────────────────────────────────── */
+const MLB_BENCH={
+  FF:{name:'4-SEAM FASTBALL', velo:{m:93.9,s:2.5},spin:{m:2255,s:220},ivb:{m:15.8,s:3.5},hb:{m:7.2,s:3.8},tspin:{m:2120,s:210}},
+  SL:{name:'SLIDER',         velo:{m:85.3,s:2.8},spin:{m:2498,s:285},ivb:{m:1.5,s:3.2}, hb:{m:5.4,s:3.5}, tspin:{m:1020,s:200}},
+  CH:{name:'CHANGEUP',       velo:{m:84.9,s:2.6},spin:{m:1771,s:190},ivb:{m:6.1,s:3.0}, hb:{m:8.7,s:3.4}, tspin:{m:1580,s:175}},
+  CU:{name:'CURVEBALL',      velo:{m:79.2,s:2.7},spin:{m:2484,s:310},ivb:{m:9.6,s:3.8}, hb:{m:6.4,s:3.9}, tspin:{m:1790,s:250}},
+  SI:{name:'SINKER',         velo:{m:93.1,s:2.4},spin:{m:2089,s:215},ivb:{m:5.2,s:3.0}, hb:{m:14.2,s:3.6},tspin:{m:1960,s:200}},
+  FC:{name:'CUTTER',         velo:{m:89.3,s:2.6},spin:{m:2363,s:255},ivb:{m:6.7,s:2.8}, hb:{m:4.1,s:3.2}, tspin:{m:1770,s:220}},
+  FS:{name:'SPLITTER',       velo:{m:85.0,s:2.6},spin:{m:1490,s:190},ivb:{m:2.0,s:3.0}, hb:{m:9.0,s:3.5}, tspin:{m:1320,s:180}},
+};
+// ivb and hb benchmarks use absolute value (more break = higher %)
+function normPct(x,m,s){
+  const z=(x-m)/s;
+  return Math.min(99,Math.max(1,Math.round(100/(1+Math.exp(-1.7*z)))));
+}
+function pctClass(p){return p>=90?'pe':p>=70?'pa':p>=40?'pm':'pb';}
+function pctSuf(p){const s=p%10;return p>=11&&p<=13?'th':s===1?'st':s===2?'nd':s===3?'rd':'th';}
+function drawMLBComp(p){
+  const band=$('mlb-band');
+  const b=MLB_BENCH[p.code];
+  if(!b){band.style.display='none';return;}
+  band.style.display='flex';
+  $('mlb-ttl').textContent='MLB %ILE · '+b.name;
+  const metrics=[
+    ['VELO',     normPct(p.velo,b.velo.m,b.velo.s),  `${b.velo.m} mph`],
+    ['TOT SPIN', normPct(p.spin,b.spin.m,b.spin.s),  `${b.spin.m.toLocaleString()} rpm`],
+    ['IVB',      normPct(Math.abs(p.ivb),b.ivb.m,b.ivb.s),  `${b.ivb.m}" break`],
+    ['HB',       normPct(Math.abs(p.hb),b.hb.m,b.hb.s),    `${b.hb.m}" break`],
+    ['TRUE SPIN',p.true_spin?normPct(p.true_spin,b.tspin.m,b.tspin.s):null, `${b.tspin.m.toLocaleString()} rpm`],
+  ];
+  $('mlb-items').innerHTML=metrics.map(([lbl,pct,avg])=>{
+    if(pct==null)return '';
+    const cls=pctClass(pct),suf=pctSuf(pct);
+    return `<div class="mlb-item"><div class="mlb-name">${lbl}</div>`
+      +`<div><span class="mlb-pct ${cls}">${pct}</span><span class="mlb-pct-suf ${cls}">${suf}</span></div>`
+      +`<div class="mlb-avg-lbl">avg ${avg}</div></div>`;
+  }).join('');
+}
+
 function drawHero(){
   if(selIdx<0){
     $('h-velo').innerHTML='—<small>mph</small>'; $('h-spin').innerHTML='—<small>rpm</small>';
@@ -1179,6 +1239,7 @@ function drawHero(){
     $('s-rht').innerHTML='—<small>ft</small>'; $('s-rsd').innerHTML='—<small>ft</small>';
     $('s-rext').innerHTML='—<small>ft</small>'; $('s-lat').innerHTML='—<small>°</small>';
     $('s-lon').innerHTML='—<small>°</small>';
+    $('mlb-band').style.display='none';
     $('traj-info').style.display='none'; return;
   }
   const p=PITCHES[selIdx];
@@ -1210,6 +1271,8 @@ function drawHero(){
   $('s-rext').innerHTML=`${p.r_ext!=null?p.r_ext.toFixed(1):'—'}<small>ft</small>`;
   $('s-lat').innerHTML=`${fmt(p.lat)}<small>°</small>`;
   $('s-lon').innerHTML=`${fmts(p.lon)}<small>°</small>`;
+  // MLB comparison
+  drawMLBComp(p);
   // trajectory info panel
   $('traj-info').style.display='block';
   $('ti-type').textContent=p.type.toUpperCase(); $('ti-type').style.color=p.color;
@@ -1390,11 +1453,15 @@ function init3D(){
   renderer=new THREE.WebGLRenderer({antialias:true});
   renderer.setClearColor(0x08090d,1);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-  renderer.setSize(host.clientWidth||800,host.clientHeight||600);
-  host.appendChild(renderer.domElement);
+  // Append canvas first with absolute fill so we can read real dimensions
+  const cvs=renderer.domElement;
+  cvs.style.cssText='display:block;position:absolute;top:0;left:0;width:100%;height:100%;';
+  host.appendChild(cvs);
+  const w=host.offsetWidth||800, h=host.offsetHeight||600;
+  renderer.setSize(w,h,false); // false = don't override CSS
   scene3=new THREE.Scene();
   scene3.background=new THREE.Color(0x0c0e18);
-  cam3=new THREE.PerspectiveCamera(45,host.clientWidth/host.clientHeight,.1,100);
+  cam3=new THREE.PerspectiveCamera(45,w/h,.1,100);
   scene3.add(new THREE.AmbientLight(0xffffff,.85));
   const dl=new THREE.DirectionalLight(0xffffff,1.1);dl.position.set(3,6,4);scene3.add(dl);
   const dl2=new THREE.DirectionalLight(0xffaa66,.5);dl2.position.set(-4,3,-3);scene3.add(dl2);
@@ -1609,8 +1676,9 @@ function animate3D(){
 window.addEventListener('resize',()=>{
   if(!renderer)return;
   const h=$('scene');
-  cam3.aspect=h.clientWidth/h.clientHeight;cam3.updateProjectionMatrix();
-  renderer.setSize(h.clientWidth,h.clientHeight);
+  const w=h.offsetWidth||800,ht=h.offsetHeight||600;
+  cam3.aspect=w/ht;cam3.updateProjectionMatrix();
+  renderer.setSize(w,ht,false);
 });
 
 $('tab3d').onclick=()=>{$('tab3d').classList.add('on');};
