@@ -4,7 +4,6 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>TM Analytics</title>
-<script src="three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 /* ══ VARIABLES ══════════════════════════════════════════════ */
@@ -1040,26 +1039,8 @@ function beginSession(player,kind,skipWS){
     +` &nbsp;<span style="color:#f26722;font-weight:800">${KIND_LABEL[currentSession.kind]||''}</span>`;
   document.getElementById('screen-profiles').classList.add('hidden');
   document.getElementById('screen-session').classList.remove('hidden');
-  // Lazy-init Three.js — defer one RAF so the browser layouts #scene first
-  if(!renderer){
-    requestAnimationFrame(()=>{
-      try{
-        init3D();
-      }catch(e){
-        console.error('3D init failed:',e);
-        const msg=document.createElement('div');
-        msg.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;pointer-events:none';
-        msg.innerHTML='<span style="color:#f26722;font-size:11px;font-weight:800">3D VIEWER UNAVAILABLE</span>'
-          +'<span style="color:#6b7585;font-size:9px">'+e.message+'</span>';
-        $('scene').appendChild(msg);
-      }
-    });
-  } else {
-    const h=$('scene');
-    renderer.setSize(h.clientWidth,h.clientHeight);
-    cam3.aspect=h.clientWidth/(h.clientHeight||1);
-    cam3.updateProjectionMatrix();
-  }
+  // Lazy-init 2D canvas — defer one RAF so the browser lays out #scene first
+  if(!c2d) requestAnimationFrame(init3D);
   clearInterval(sessInterval);
   sessInterval=setInterval(()=>{
     const s=Math.floor((Date.now()-currentSession.startTime)/1000);
@@ -1437,11 +1418,10 @@ const POSES=[
 ];
 const PHASES=['wind-up','stride','arm cock','release','follow-through'];
 
-let renderer,scene3,cam3,jMesh={},bGeo,skelPlaying=true,animT=0;
-let orbit={theta:.6,phi:1.15,r:4.5,tx:0,ty:1.0,tz:.3,drag:false,px:0,py:0};
-// Trajectory
-let ballMesh=null, pathGroup=null, ballCurve=null, ballT=0, ballActive=false;
-let szMat=null; // strike zone material for flash
+/* ── 2D CANVAS STATE ── */
+let c2d=null,ctx2=null,skelPlaying=true,animT=0;
+let orbit={theta:.6,phi:1.15,r:4.5,tx:0,ty:1.0,tz:.3};
+let pathHistory=[],ballCurve2D=null,ballT=0,ballActive=false,szFlash=0;
 
 const lerp=(a,b,k)=>a+(b-a)*k;
 function poseAt(tt){
@@ -1454,237 +1434,218 @@ function poseAt(tt){
 
 function init3D(){
   const host=$('scene');
-  if(typeof THREE==='undefined') throw new Error('Three.js not loaded');
-  renderer=new THREE.WebGLRenderer({antialias:true});
-  renderer.setClearColor(0x08090d,1);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
-  // Append canvas first with absolute fill so we can read real dimensions
-  const cvs=renderer.domElement;
-  cvs.style.cssText='display:block;position:absolute;top:0;left:0;width:100%;height:100%;';
-  host.appendChild(cvs);
-  const w=host.offsetWidth||800, h=host.offsetHeight||600;
-  renderer.setSize(w,h,false); // false = don't override CSS
-  scene3=new THREE.Scene();
-  scene3.background=new THREE.Color(0x0c0e18);
-  cam3=new THREE.PerspectiveCamera(45,w/h,.1,100);
-  scene3.add(new THREE.AmbientLight(0xffffff,.85));
-  const dl=new THREE.DirectionalLight(0xffffff,1.1);dl.position.set(3,6,4);scene3.add(dl);
-  const dl2=new THREE.DirectionalLight(0xffaa66,.5);dl2.position.set(-4,3,-3);scene3.add(dl2);
-  scene3.add(new THREE.GridHelper(8,16,0x1e222e,0x12141a));
+  c2d=document.createElement('canvas');
+  c2d.style.cssText='display:block;position:absolute;top:0;left:0;width:100%;height:100%;cursor:grab;touch-action:none;';
+  host.appendChild(c2d);
+  ctx2=c2d.getContext('2d');
 
-  // Mound + rubber + plate
-  const mound=new THREE.Mesh(new THREE.CylinderGeometry(1.4,1.6,.18,40),
-    new THREE.MeshStandardMaterial({color:0x3a2a1c,roughness:1}));
-  mound.position.set(0,.09,0);scene3.add(mound);
-  scene3.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(.5,.04,.12),
-    new THREE.MeshStandardMaterial({color:0xdddddd})),{position:{x:0,y:.2,z:-.05}}));
-  scene3.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(.43,.02,.43),
-    new THREE.MeshStandardMaterial({color:0xffffff})),{position:{x:0,y:.02,z:5.0}}));
-
-  /* ── STRIKE ZONE ── */
-  const ft=0.3048; // feet → meters (scene units)
-  const szW=17/12*ft*1.4; // 17" wide, slight scale for visibility
-  const szBot=1.5*ft, szTop=3.5*ft;
-  const szZ=4.88; // just in front of plate
-  const szPts=[
-    new THREE.Vector3(-szW/2,szBot,szZ), new THREE.Vector3(szW/2,szBot,szZ),
-    new THREE.Vector3(szW/2,szTop,szZ),  new THREE.Vector3(-szW/2,szTop,szZ),
-    new THREE.Vector3(-szW/2,szBot,szZ),
-  ];
-  szMat=new THREE.LineBasicMaterial({color:0x334488,opacity:.7,transparent:true});
-  scene3.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(szPts),szMat));
-  // zone quadrants
-  [szBot+(szTop-szBot)/3, szBot+(szTop-szBot)*2/3].forEach(y=>{
-    scene3.add(new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-szW/2,y,szZ),new THREE.Vector3(szW/2,y,szZ)]),
-      new THREE.LineBasicMaterial({color:0x223366,opacity:.4,transparent:true})));
-  });
-  [-szW/6, szW/6].forEach(x=>{
-    scene3.add(new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x,szBot,szZ),new THREE.Vector3(x,szTop,szZ)]),
-      new THREE.LineBasicMaterial({color:0x223366,opacity:.4,transparent:true})));
-  });
-
-  /* ── BALL ── */
-  const ballGeo=new THREE.SphereGeometry(.04,16,16);
-  const ballMatObj=new THREE.MeshStandardMaterial({color:0xffffff,emissive:0x444444,roughness:.4,metalness:.1});
-  ballMesh=new THREE.Mesh(ballGeo,ballMatObj);
-  ballMesh.visible=false;
-  scene3.add(ballMesh);
-
-  /* ── PATH GROUP ── */
-  pathGroup=new THREE.Group();
-  scene3.add(pathGroup);
-
-  /* ── SKELETON ── */
-  const g=new THREE.Group();scene3.add(g);
-  const jmat=new THREE.MeshStandardMaterial({color:0xf26722,emissive:0x661100,roughness:.3,metalness:.1});
-  const headMat=new THREE.MeshStandardMaterial({color:0xffd9c2,emissive:0x331100,roughness:.5});
-  JOINTS.forEach(j=>{
-    const r=j==='head'?.10:j.includes('Wr')?.055:.07;
-    const m=new THREE.Mesh(new THREE.SphereGeometry(r,16,16),j==='head'?headMat:jmat);
-    g.add(m);jMesh[j]=m;
-  });
-  bGeo=new THREE.BufferGeometry();
-  bGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(BONES.length*6),3));
-  g.add(new THREE.LineSegments(bGeo,new THREE.LineBasicMaterial({color:0xf26722,linewidth:2,opacity:.9,transparent:true})));
-
-  // orbit
-  host.addEventListener('mousedown',e=>{orbit.drag=true;orbit.px=e.clientX;orbit.py=e.clientY;});
-  window.addEventListener('mouseup',()=>orbit.drag=false);
+  let drag=false,px=0,py=0;
+  host.addEventListener('mousedown',e=>{drag=true;px=e.clientX;py=e.clientY;c2d.style.cursor='grabbing';});
+  window.addEventListener('mouseup',()=>{drag=false;c2d.style.cursor='grab';});
   window.addEventListener('mousemove',e=>{
-    if(!orbit.drag)return;
-    orbit.theta-=(e.clientX-orbit.px)*.01;
-    orbit.phi=Math.max(.2,Math.min(2.7,orbit.phi-(e.clientY-orbit.py)*.008));
-    orbit.px=e.clientX;orbit.py=e.clientY;updateCam();
+    if(!drag)return;
+    orbit.theta-=(e.clientX-px)*.012;
+    orbit.phi=Math.max(.25,Math.min(1.75,orbit.phi+(e.clientY-py)*.009));
+    px=e.clientX;py=e.clientY;
   });
   host.addEventListener('wheel',e=>{e.preventDefault();
-    orbit.r=Math.max(1.8,Math.min(10,orbit.r+e.deltaY*.004));updateCam();},{passive:false});
-  updateCam();
+    orbit.r=Math.max(2,Math.min(9,orbit.r+e.deltaY*.005));},{passive:false});
+
+  // Touch support for iPad / tablet
+  let t0=null;
+  host.addEventListener('touchstart',e=>{e.preventDefault();
+    if(e.touches.length===1){drag=true;t0={x:e.touches[0].clientX,y:e.touches[0].clientY};}},{passive:false});
+  host.addEventListener('touchend',()=>{drag=false;t0=null;});
+  host.addEventListener('touchmove',e=>{
+    e.preventDefault();if(!drag||!t0||e.touches.length!==1)return;
+    orbit.theta-=(e.touches[0].clientX-t0.x)*.012;
+    orbit.phi=Math.max(.25,Math.min(1.75,orbit.phi+(e.touches[0].clientY-t0.y)*.009));
+    t0={x:e.touches[0].clientX,y:e.touches[0].clientY};
+  },{passive:false});
+
   animate3D();
 }
 
-function updateCam(){
-  cam3.position.set(
-    orbit.tx+orbit.r*Math.sin(orbit.phi)*Math.sin(orbit.theta),
-    orbit.ty+orbit.r*Math.cos(orbit.phi),
-    orbit.tz+orbit.r*Math.sin(orbit.phi)*Math.cos(orbit.theta));
-  cam3.lookAt(orbit.tx,orbit.ty,orbit.tz);
-}
-function applyPose(P){
-  JOINTS.forEach(j=>{const p=P[j];jMesh[j].position.set(p[0],p[1],p[2]);});
-  const arr=bGeo.attributes.position.array;let idx=0;
-  BONES.forEach(([a,b])=>{const A=P[a],B=P[b];
-    arr[idx++]=A[0];arr[idx++]=A[1];arr[idx++]=A[2];
-    arr[idx++]=B[0];arr[idx++]=B[1];arr[idx++]=B[2];});
-  bGeo.attributes.position.needsUpdate=true;
-}
+function updateCam(){} // no-op — orbit state used directly in animate3D
 
-/* ── PITCH TRAJECTORY ANIMATION ── */
-function animatePitch3D(p){
-  // Restart skeleton delivery from wind-up, snap to side view, auto-orbit for 6s
-  animT=0; skelPlaying=true;
-  $('playbtn').textContent='⏸ Skel'; $('vplay').textContent='⏸';
-  orbit.theta=1.7; orbit.phi=1.05; orbit.r=4.5; updateCam();
-  startAutoOrbit(6000);
-
-  const ft=0.3048;
-  // Release point: pitcher's hand at release phase (~wrist position)
-  const relX = (currentPlayer&&currentPlayer.throws==='L'?-.1:.1);
-  const relY = 1.68; // ~5.5 ft release height
-  const relZ = 0.65; // just off the mound toward plate
-
-  // Plate contact from Rapsodo data
-  const pX = p.side * ft * 1.3;          // plate_x in feet → scene x (slight scale-up for visibility)
-  const pY = Math.max(0.08, p.height * ft); // plate_z in feet → scene y
-  const pZ = 4.88;                         // front of plate
-
-  // Cubic bezier for realistic late break
-  const in2s = ft/12; // inches → scene units
-  const ivbS = p.ivb * in2s * 1.4; // scaled for visibility
-  const hbS  = p.hb  * in2s * 1.4;
-
-  const P0=new THREE.Vector3(relX,relY,relZ);
-  const P3=new THREE.Vector3(pX,pY,pZ);
-
-  // P1: ball goes roughly straight early, small deviation
-  const P1=new THREE.Vector3(
-    relX+(pX-relX)*.3 + hbS*.12,
-    relY+(pY-relY)*.3 + ivbS*.08,
-    relZ+(pZ-relZ)*.3
-  );
-  // P2: late break kicks in hard
-  const P2=new THREE.Vector3(
-    relX+(pX-relX)*.72 + hbS*.5,
-    relY+(pY-relY)*.72 + ivbS*.42,
-    relZ+(pZ-relZ)*.72
-  );
-
-  ballCurve=new THREE.CubicBezierCurve3(P0,P1,P2,P3);
-
-  // Add path line (keep last 5)
-  if(pathGroup.children.length>=5){
-    const old=pathGroup.children[0];
-    pathGroup.remove(old);old.geometry.dispose();old.material.dispose();
-  }
-  const pts=ballCurve.getPoints(64);
-  const pathGeo=new THREE.BufferGeometry().setFromPoints(pts);
-  const pathMat=new THREE.LineBasicMaterial({
-    color:new THREE.Color(p.color),opacity:.75,transparent:true});
-  pathGroup.add(new THREE.Line(pathGeo,pathMat));
-
-  // Fade older paths
-  pathGroup.children.forEach((line,i,arr)=>{
-    line.material.opacity=0.2+0.55*(i/(arr.length-1||1));
-  });
-
-  // Start ball animation
-  ballMesh.material.color.setStyle(p.color);
-  ballMesh.material.emissive.setStyle(p.color);
-  ballMesh.material.emissiveIntensity=0.5;
-  ballMesh.visible=true;
-  ballT=0; ballActive=true;
-}
-
-function clearTrajHistory(){
-  if(!pathGroup)return;
-  pathGroup.children.forEach(c=>{c.geometry.dispose();c.material.dispose();});
-  while(pathGroup.children.length)pathGroup.remove(pathGroup.children[0]);
-  if(ballMesh)ballMesh.visible=false;
-}
-
-function flashZone(color){
-  szMat.color.setStyle(color);szMat.opacity=1;
-  let t=0;
-  const fade=setInterval(()=>{
-    t+=.05;szMat.opacity=Math.max(.7,.9-t*.4);
-    szMat.color.lerp(new THREE.Color(0x334488),t*.06);
-    if(t>1){szMat.color.setHex(0x334488);szMat.opacity=.7;clearInterval(fade);}
-  },30);
-}
-
-let autoOrbitId=null;
-function startAutoOrbit(ms){
-  if(autoOrbitId)clearInterval(autoOrbitId);
-  autoOrbitId=setInterval(()=>{orbit.theta+=.006;updateCam();},16);
-  setTimeout(()=>{clearInterval(autoOrbitId);autoOrbitId=null;},ms);
+function cubicBez(t,p0,p1,p2,p3){
+  const u=1-t;
+  return[u*u*u*p0[0]+3*u*u*t*p1[0]+3*u*t*t*p2[0]+t*t*t*p3[0],
+         u*u*u*p0[1]+3*u*u*t*p1[1]+3*u*t*t*p2[1]+t*t*t*p3[1],
+         u*u*u*p0[2]+3*u*u*t*p1[2]+3*u*t*t*p2[2]+t*t*t*p3[2]];
 }
 
 function animate3D(){
   requestAnimationFrame(animate3D);
-  // Skeleton — play through delivery once, then hold at release pose
+  if(!c2d||!ctx2)return;
+
+  // Sync canvas pixel resolution to display size
+  const W=c2d.offsetWidth||400,H=c2d.offsetHeight||300;
+  if(c2d.width!==W||c2d.height!==H){c2d.width=W;c2d.height=H;}
+
+  // Advance skeleton playback
   if(skelPlaying){
-    animT+=.004;
-    if(animT>=1){
-      animT=1;skelPlaying=false;
-      $('playbtn').textContent='▶ Skel';$('vplay').textContent='▶';
-    }
+    animT=Math.min(1,animT+.004);
+    if(animT>=1){skelPlaying=false;$('playbtn').textContent='▶ Skel';$('vplay').textContent='▶';}
   }
-  applyPose(poseAt(animT));
   const ph=Math.min(PHASES.length-1,Math.floor(animT*(POSES.length-1)));
   $('phase-lbl').textContent=PHASES[ph];
   $('scrub-fill').style.width=(animT*100)+'%';
-  // Ball
-  if(ballActive&&ballCurve){
-    ballT+=.018; // speed of ball travel (adjust for visual)
-    if(ballT>=1){
-      ballT=1;ballActive=false;
-      flashZone(ballMesh.material.color.getStyle());
-      setTimeout(()=>{if(ballMesh)ballMesh.visible=false;},1200);
-    }
-    const pos=ballCurve.getPoint(ballT);
-    ballMesh.position.copy(pos);
+
+  // ── Camera basis vectors ──────────────────────────────────
+  const sphi=Math.sin(orbit.phi),cphi=Math.cos(orbit.phi);
+  const sth=Math.sin(orbit.theta),cth=Math.cos(orbit.theta);
+  const camX=orbit.tx+orbit.r*sphi*sth;
+  const camY=orbit.ty+orbit.r*cphi;
+  const camZ=orbit.tz+orbit.r*sphi*cth;
+  // Forward unit vector (camera → target)
+  const Fx=(orbit.tx-camX)/orbit.r,Fy=(orbit.ty-camY)/orbit.r,Fz=(orbit.tz-camZ)/orbit.r;
+  // Right = normalize(F × Y_axis)  →  (-Fz, 0, Fx) / sqrt(Fz²+Fx²)
+  const rL=Math.sqrt(Fz*Fz+Fx*Fx)||1;
+  const Rx=-Fz/rL,Rz=Fx/rL; // Ry = 0
+  // Up = R × F  (auto-normalized since R and F are unit and orthogonal)
+  const Ux=-Rz*Fy,Uy=rL,Uz=Rx*Fy;
+  const fovS=Math.min(W,H)*1.15;
+
+  // Project a 3D world point → 2D screen
+  function pr(px,py,pz){
+    const dx=px-camX,dy=py-camY,dz=pz-camZ;
+    const cZ=dx*Fx+dy*Fy+dz*Fz; // depth along forward axis
+    if(cZ<.05)return null;
+    return{x:W*.5+(dx*Rx+dz*Rz)/cZ*fovS,
+           y:H*.5-(dx*Ux+dy*Uy+dz*Uz)/cZ*fovS,
+           d:cZ};
   }
-  renderer.render(scene3,cam3);
+
+  // ── Clear ────────────────────────────────────────────────
+  ctx2.fillStyle='#08090d';ctx2.fillRect(0,0,W,H);
+
+  // ── Floor grid ───────────────────────────────────────────
+  ctx2.strokeStyle='#1a1e2a';ctx2.lineWidth=1;
+  for(let i=-8;i<=10;i++){
+    const a=pr(i*.5,0,-1),b=pr(i*.5,0,6.5);
+    const c=pr(-4,0,i*.5),d=pr(5,0,i*.5);
+    if(a&&b){ctx2.beginPath();ctx2.moveTo(a.x,a.y);ctx2.lineTo(b.x,b.y);ctx2.stroke();}
+    if(c&&d){ctx2.beginPath();ctx2.moveTo(c.x,c.y);ctx2.lineTo(d.x,d.y);ctx2.stroke();}
+  }
+
+  // ── Mound ────────────────────────────────────────────────
+  {const pts=[];for(let i=0;i<=24;i++){const a=i/24*Math.PI*2;const p=pr(Math.cos(a)*1.4,.18,Math.sin(a)*1.4);if(p)pts.push(p);}
+  if(pts.length>2){ctx2.beginPath();ctx2.moveTo(pts[0].x,pts[0].y);pts.forEach(p=>ctx2.lineTo(p.x,p.y));ctx2.closePath();
+    ctx2.fillStyle='#2c1e0f';ctx2.fill();ctx2.strokeStyle='#3d2b1a';ctx2.lineWidth=1.5;ctx2.stroke();}}
+
+  // ── Rubber ───────────────────────────────────────────────
+  {const cs=[[-0.24,.2,-.06],[.24,.2,-.06],[.24,.2,.06],[-.24,.2,.06]].map(([x,y,z])=>pr(x,y,z)).filter(Boolean);
+  if(cs.length===4){ctx2.beginPath();ctx2.moveTo(cs[0].x,cs[0].y);cs.forEach(p=>ctx2.lineTo(p.x,p.y));ctx2.closePath();ctx2.fillStyle='#cccccc';ctx2.fill();}}
+
+  // ── Home plate ───────────────────────────────────────────
+  {const cs=[[-.21,.02,4.9],[.21,.02,4.9],[.21,.02,5.12],[0,.02,5.22],[-.21,.02,5.12]].map(([x,y,z])=>pr(x,y,z)).filter(Boolean);
+  if(cs.length===5){ctx2.beginPath();ctx2.moveTo(cs[0].x,cs[0].y);cs.forEach(p=>ctx2.lineTo(p.x,p.y));ctx2.closePath();ctx2.fillStyle='#ffffff';ctx2.fill();}}
+
+  // ── Strike zone ──────────────────────────────────────────
+  const ft=.3048,szHW=17/12*ft*1.4/2,szBot=1.5*ft,szTop=3.5*ft,szZ=4.88;
+  if(szFlash>0)szFlash=Math.max(0,szFlash-.03);
+  {const cs=[[-szHW,szBot,szZ],[szHW,szBot,szZ],[szHW,szTop,szZ],[-szHW,szTop,szZ]].map(([x,y,z])=>pr(x,y,z)).filter(Boolean);
+  if(cs.length===4){
+    ctx2.beginPath();ctx2.moveTo(cs[0].x,cs[0].y);cs.forEach(p=>ctx2.lineTo(p.x,p.y));ctx2.closePath();
+    ctx2.globalAlpha=szFlash>.01?.45+szFlash*.5:.45;
+    ctx2.strokeStyle=szFlash>.01?`hsl(25,100%,${55+Math.round(szFlash*25)}%)`:'#3344aa';
+    ctx2.lineWidth=2;ctx2.stroke();
+    // Inner grid
+    ctx2.globalAlpha*=.55;ctx2.strokeStyle='#334488';ctx2.lineWidth=1;
+    for(let i=1;i<3;i++){
+      const y=szBot+(szTop-szBot)*i/3;
+      const a=pr(-szHW,y,szZ),b=pr(szHW,y,szZ);
+      if(a&&b){ctx2.beginPath();ctx2.moveTo(a.x,a.y);ctx2.lineTo(b.x,b.y);ctx2.stroke();}
+      const x=-szHW+szHW*2*i/3;
+      const c=pr(x,szBot,szZ),d=pr(x,szTop,szZ);
+      if(c&&d){ctx2.beginPath();ctx2.moveTo(c.x,c.y);ctx2.lineTo(d.x,d.y);ctx2.stroke();}
+    }
+    ctx2.globalAlpha=1;
+  }}
+
+  // ── Path history ─────────────────────────────────────────
+  pathHistory.forEach((path,pi,arr)=>{
+    ctx2.globalAlpha=.2+.65*(pi/(arr.length-1||1));
+    ctx2.strokeStyle=path.color;ctx2.lineWidth=2.5;ctx2.lineCap='round';
+    ctx2.beginPath();let first=true;
+    for(let t=0;t<=1.001;t+=.03){
+      const b=cubicBez(Math.min(1,t),path.p0,path.p1,path.p2,path.p3);
+      const p=pr(b[0],b[1],b[2]);if(!p)continue;
+      if(first){ctx2.moveTo(p.x,p.y);first=false;}else ctx2.lineTo(p.x,p.y);
+    }
+    ctx2.stroke();ctx2.globalAlpha=1;
+  });
+
+  // ── Ball ─────────────────────────────────────────────────
+  if(ballActive&&ballCurve2D){
+    ballT=Math.min(1,ballT+.018);
+    const b=cubicBez(ballT,ballCurve2D.p0,ballCurve2D.p1,ballCurve2D.p2,ballCurve2D.p3);
+    const bp=pr(b[0],b[1],b[2]);
+    if(bp){const br=Math.max(4,11/bp.d);
+      ctx2.globalAlpha=1;ctx2.beginPath();ctx2.arc(bp.x,bp.y,br,0,Math.PI*2);
+      ctx2.fillStyle='#ffffff';ctx2.fill();ctx2.strokeStyle='#dde';ctx2.lineWidth=1;ctx2.stroke();}
+    if(ballT>=1){ballActive=false;szFlash=1;}
+  }
+
+  // ── Skeleton — bones ─────────────────────────────────────
+  const pose=poseAt(animT);
+  ctx2.lineCap='round';
+  BONES.forEach(([a,bn])=>{
+    const pa=pr(...pose[a]),pb=pr(...pose[bn]);if(!pa||!pb)return;
+    const dep=(pa.d+pb.d)/2;
+    ctx2.globalAlpha=Math.max(.5,Math.min(1,1.9-dep*.22));
+    ctx2.strokeStyle='#f26722';ctx2.lineWidth=Math.max(3,9/dep);
+    ctx2.beginPath();ctx2.moveTo(pa.x,pa.y);ctx2.lineTo(pb.x,pb.y);ctx2.stroke();
+  });
+  // ── Skeleton — joints ────────────────────────────────────
+  JOINTS.forEach(j=>{
+    const p=pr(...pose[j]);if(!p)return;
+    const isH=j==='head';
+    const r=isH?Math.max(8,18/p.d):Math.max(4,8/p.d);
+    ctx2.globalAlpha=Math.max(.6,Math.min(1,1.9-p.d*.22));
+    ctx2.beginPath();ctx2.arc(p.x,p.y,r,0,Math.PI*2);
+    ctx2.fillStyle=isH?'#ffd9c2':'#f26722';ctx2.fill();
+    if(isH){ctx2.strokeStyle='#f26722';ctx2.lineWidth=2;ctx2.stroke();}
+  });
+  ctx2.globalAlpha=1;
 }
 
-window.addEventListener('resize',()=>{
-  if(!renderer)return;
-  const h=$('scene');
-  const w=h.offsetWidth||800,ht=h.offsetHeight||600;
-  cam3.aspect=w/ht;cam3.updateProjectionMatrix();
-  renderer.setSize(w,ht,false);
-});
+/* ── PITCH TRAJECTORY ANIMATION ── */
+function animatePitch3D(p){
+  animT=0;skelPlaying=true;
+  $('playbtn').textContent='⏸ Skel';$('vplay').textContent='⏸';
+  orbit.theta=1.7;orbit.phi=1.05;orbit.r=4.5;
+  startAutoOrbit(6000);
+
+  const ft=.3048;
+  const relX=(currentPlayer&&currentPlayer.throws==='L'?-.1:.1);
+  const relY=1.68,relZ=0.65;
+  const pX=p.side*ft*1.3,pY=Math.max(.08,p.height*ft),pZ=4.88;
+  const in2s=ft/12,ivbS=p.ivb*in2s*1.4,hbS=p.hb*in2s*1.4;
+
+  const p0=[relX,relY,relZ],p3=[pX,pY,pZ];
+  const p1=[relX+(pX-relX)*.3+hbS*.12, relY+(pY-relY)*.3+ivbS*.08, relZ+(pZ-relZ)*.3];
+  const p2=[relX+(pX-relX)*.72+hbS*.5, relY+(pY-relY)*.72+ivbS*.42, relZ+(pZ-relZ)*.72];
+
+  if(pathHistory.length>=5)pathHistory.shift();
+  pathHistory.push({p0,p1,p2,p3,color:p.color});
+  ballCurve2D={p0,p1,p2,p3};
+  ballT=0;ballActive=true;
+}
+
+function clearTrajHistory(){
+  pathHistory=[];ballActive=false;ballT=0;szFlash=0;
+}
+
+function flashZone(){szFlash=1;}
+
+let autoOrbitId=null;
+function startAutoOrbit(ms){
+  if(autoOrbitId)clearInterval(autoOrbitId);
+  autoOrbitId=setInterval(()=>{orbit.theta+=.006;},16);
+  setTimeout(()=>{clearInterval(autoOrbitId);autoOrbitId=null;},ms);
+}
 
 $('tab3d').onclick=()=>{$('tab3d').classList.add('on');};
 $('playbtn').onclick=()=>{
@@ -1694,7 +1655,7 @@ $('playbtn').onclick=()=>{
   $('vplay').textContent=skelPlaying?'⏸':'▶';
 };
 $('vplay').onclick=()=>$('playbtn').click();
-$('resetcam').onclick=()=>{orbit.theta=.6;orbit.phi=1.15;orbit.r=4.5;updateCam();};
+$('resetcam').onclick=()=>{orbit.theta=.6;orbit.phi=1.15;orbit.r=4.5;};
 
 /* ─────────────────────────────────────────────────────────────
    CAMERA GRID
