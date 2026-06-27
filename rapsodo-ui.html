@@ -955,16 +955,21 @@ function resetLockTimer(){
    PITCH TYPE MAP
    ───────────────────────────────────────────────────────────── */
 const TYPE_MAP={
-  FF:{label:'4-Seam',   short:'FF',color:'#e53e3e'},
-  FT:{label:'Sinker',   short:'SI',color:'#ed8936'},
-  SI:{label:'Sinker',   short:'SI',color:'#ed8936'},
-  SL:{label:'Slider',   short:'SL',color:'#3b82f6'},
-  ST:{label:'Sweeper',  short:'ST',color:'#6366f1'},
-  CU:{label:'Curveball',short:'CU',color:'#10b981'},
-  KC:{label:'Knuckle-C',short:'KC',color:'#10b981'},
-  CH:{label:'Changeup', short:'CH',color:'#94a3b8'},
-  FC:{label:'Cutter',   short:'FC',color:'#8b5cf6'},
-  FS:{label:'Splitter', short:'FS',color:'#0891b2'},
+  FF:{label:'Four-Seam Fastball',short:'FF',color:'#e53e3e'},
+  FT:{label:'Sinker',            short:'SI',color:'#ed8936'}, // alias for incoming data
+  SI:{label:'Sinker',            short:'SI',color:'#ed8936'},
+  FC:{label:'Cutter',            short:'FC',color:'#8b5cf6'},
+  CH:{label:'Changeup',          short:'CH',color:'#94a3b8'},
+  FO:{label:'Forkball',          short:'FO',color:'#0e7490'},
+  FS:{label:'Splitter',          short:'FS',color:'#0891b2'},
+  SL:{label:'Slider',            short:'SL',color:'#3b82f6'},
+  ST:{label:'Sweeper',           short:'ST',color:'#6366f1'},
+  SV:{label:'Slurve',            short:'SV',color:'#14b8a6'},
+  CU:{label:'Curveball',         short:'CU',color:'#10b981'},
+  KC:{label:'Knuckle-curve',     short:'KC',color:'#22c55e'},
+  KN:{label:'Knuckleball',       short:'KN',color:'#f59e0b'},
+  EP:{label:'Eephus',            short:'EP',color:'#a78bfa'},
+  SC:{label:'Screwball',         short:'SC',color:'#ec4899'},
 };
 function resolveType(code){return TYPE_MAP[code]||{label:code||'UNK',short:'??',color:'#6b7585'};}
 
@@ -1155,8 +1160,8 @@ function overrideType(code){
   });
   refresh();
 }
-// Ordered, deduplicated list for the override panel (FT/KC are alias-only for incoming data)
-const OVERRIDE_TYPES=['FF','SI','FC','CH','FS','SL','ST','CU'];
+// Ordered list for the override panel — FT is alias-only for incoming data, not shown
+const OVERRIDE_TYPES=['CH','CU','FC','EP','FO','FF','KN','KC','SC','SI','SL','SV','FS','ST'];
 
 function buildTagPanels(){
   // Type buttons — curated list, no duplicates
