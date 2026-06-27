@@ -1153,13 +1153,17 @@ function overrideType(code){
   });
   refresh();
 }
+// Ordered, deduplicated list for the override panel (FT/KC are alias-only for incoming data)
+const OVERRIDE_TYPES=['FF','SI','FC','CH','FS','SL','ST','CU'];
+
 function buildTagPanels(){
-  // Type buttons — all pitch types
+  // Type buttons — curated list, no duplicates
   const tb=document.getElementById('type-btns');
   tb.innerHTML='';
-  Object.entries(TYPE_MAP).forEach(([code,t])=>{
+  OVERRIDE_TYPES.forEach(code=>{
+    const t=TYPE_MAP[code];if(!t)return;
     const b=document.createElement('button');
-    b.className='tp-btn';b.textContent=t.short;b.dataset.code=code;b.dataset.color=t.color;
+    b.className='tp-btn';b.textContent=code;b.dataset.code=code;b.dataset.color=t.color;
     b.title=t.label;
     b.onclick=()=>overrideType(code);
     tb.appendChild(b);
@@ -1317,6 +1321,25 @@ function addPitch(raw){
   showFlash(p,isPB);
   try{animatePitch3D(p);}catch(e){}
   updateSessStats();
+  if(liveMode) autoBallStrike(p);
+  else refresh();
+}
+
+// Strike zone: 17" plate ± ball radius (~0.83 ft each side), height 1.5–3.5 ft
+function autoBallStrike(p){
+  const inZone=Math.abs(p.side)<=0.833&&p.height>=1.5&&p.height<=3.5;
+  const call=inZone?'Called Strike':'Ball';
+  p.result=call;
+  if(currentSession&&currentSession.pitches[selIdx])currentSession.pitches[selIdx].result=call;
+  // Advance count without re-checking selIdx (already set above)
+  if(call==='Ball'){
+    COUNT.b++;
+    if(COUNT.b>=4)COUNT={b:0,s:0,o:0};
+  } else {
+    COUNT.s++;
+    if(COUNT.s>=3){COUNT.s=0;COUNT.b=0;COUNT.o++;if(COUNT.o>=3)COUNT={b:0,s:0,o:0};}
+  }
+  renderCountDots();
   refresh();
 }
 
