@@ -1636,8 +1636,9 @@ function connectWS(){
     if(m.type==='session_start')      beginSessionFromWS(m);
     else if(m.type==='session_end')   endSession();
     else if(m.type==='select_pitch'){ if(typeof m.index==='number'){selIdx=m.index;refresh();} }
-    else if(m.type==='pitch_update')  updatePitchFromWS(m);   // coach tagged outcome / fixed type
-    else                              addPitch(m);   // a pitch object
+    else if(m.type==='pitch_update')  updatePitchFromWS(m);
+    else if(m.type==='skeleton_frame') applySkeletonFrame(m);  // live OptiTrack data
+    else                              addPitch(m);
   }catch{} };
   ws.onclose=schedRec; ws.onerror=()=>{};
 }
@@ -1676,8 +1677,36 @@ let c2d=null,ctx2=null,skelPlaying=true,animT=0;
 let orbit={theta:.6,phi:1.15,r:4.5,tx:0,ty:1.0,tz:.3};
 let pathHistory=[],ballCurve2D=null,ballT=0,ballActive=false,szFlash=0;
 
+// Live pose from OptiTrack skeleton frames — overrides mock POSES when set.
+// Keyed by our joint name, value is [x,y,z] in meters (Y-up, right-handed).
+let livePose=null;
+
+// Motive Baseline bone name → our renderer joint name.
+// Mirrored in rapsodo-pi/server/skeleton_source.py as BONE_MAP. Keep in sync.
+const MOTIVE_BONE_MAP={
+  Hip:'pelvis', Ab:'mSpine', Chest:'mSpine',
+  Neck:'neck',  Head:'head',
+  LShoulder:'lSh', LUArm:'lEl', LFArm:'lWr', LHand:'lWr',
+  RShoulder:'rSh', RUArm:'rEl', RFArm:'rWr', RHand:'rWr',
+  LThigh:'lHip', LShin:'lKnee', LFoot:'lAnk', LToe:'lAnk',
+  RThigh:'rHip', RShin:'rKnee', RFoot:'rAnk', RToe:'rAnk',
+};
+
+function applySkeletonFrame(msg){
+  const skel=msg.skeletons&&msg.skeletons[0];
+  if(!skel||!skel.bones)return;
+  const pose={};
+  skel.bones.forEach(b=>{
+    const joint=MOTIVE_BONE_MAP[b.name];
+    if(joint&&!pose[joint])pose[joint]=b.pos;   // first match wins (e.g. Ab before Chest)
+  });
+  // Only replace livePose if we got enough joints to draw a skeleton
+  if(Object.keys(pose).length>=8)livePose=pose;
+}
+
 const lerp=(a,b,k)=>a+(b-a)*k;
 function poseAt(tt){
+  if(livePose)return livePose;
   const seg=tt*(POSES.length-1),i=Math.min(POSES.length-2,Math.floor(seg)),k=seg-i;
   const out={};
   JOINTS.forEach(j=>{const A=POSES[i][j],B=POSES[i+1][j];
@@ -1736,14 +1765,14 @@ function animate3D(){
   const W=c2d.offsetWidth||400,H=c2d.offsetHeight||300;
   if(c2d.width!==W||c2d.height!==H){c2d.width=W;c2d.height=H;}
 
-  // Advance skeleton playback
-  if(skelPlaying){
+  // Advance skeleton playback — paused when live OptiTrack data is flowing
+  if(!livePose&&skelPlaying){
     animT=Math.min(1,animT+.004);
     if(animT>=1){skelPlaying=false;$('playbtn').textContent='▶ Skel';$('vplay').textContent='▶';}
   }
   const ph=Math.min(PHASES.length-1,Math.floor(animT*(POSES.length-1)));
-  $('phase-lbl').textContent=PHASES[ph];
-  $('scrub-fill').style.width=(animT*100)+'%';
+  $('phase-lbl').textContent=livePose?'LIVE':PHASES[ph];
+  $('scrub-fill').style.width=(livePose?100:animT*100)+'%';
 
   // ── Camera basis vectors ──────────────────────────────────
   const sphi=Math.sin(orbit.phi),cphi=Math.cos(orbit.phi);
@@ -1889,6 +1918,7 @@ function animatePitch3D(p){
 
 function clearTrajHistory(){
   pathHistory=[];ballActive=false;ballT=0;szFlash=0;
+  livePose=null;animT=0;skelPlaying=true;  // reset to mock animation
 }
 
 function flashZone(){szFlash=1;}
