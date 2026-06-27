@@ -483,6 +483,11 @@ input,select,textarea{outline:none;font-family:inherit}
       <input type="text" id="np-team" placeholder="e.g. Los Angeles Dodgers"/>
     </div>
     <div class="frow">
+      <label>PORTAL EMAIL  <span style="color:var(--dim);font-weight:600">(optional — links to their player portal account)</span></label>
+      <input type="email" id="np-email" placeholder="player@example.com" autocomplete="off"/>
+      <div class="hint">Player must have already registered on the portal with this email</div>
+    </div>
+    <div class="frow">
       <label>PLAYER PIN  <span style="color:var(--dim);font-weight:600">(4 digits — protects their session data)</span></label>
       <input type="password" id="np-pin" placeholder="4-digit PIN" maxlength="4" inputmode="numeric"/>
       <div class="hint">Players must enter this PIN to access their sessions</div>
@@ -965,12 +970,22 @@ async function saveNewPlayer(){
   const pinVal=document.getElementById('np-pin').value.trim();
   if(pinVal&&!/^\d{4}$/.test(pinVal)){alert('PIN must be exactly 4 digits.');return;}
   const pinHash=pinVal?await hashPIN(pinVal):null;
-  const profiles=STORE.profiles();
-  profiles.push({id:crypto.randomUUID(),name,throws:selHand,
+  const email=document.getElementById('np-email').value.trim().toLowerCase();
+  const profile={id:crypto.randomUUID(),name,throws:selHand,
     position:document.getElementById('np-pos').value,
     team:document.getElementById('np-team').value.trim(),
-    color:selColor,pinHash});
+    color:selColor,pinHash,email};
+  const profiles=STORE.profiles();
+  profiles.push(profile);
   STORE.save('tm-profiles',profiles);
+  // Link facility profile to cloud account (non-blocking — player must have registered first)
+  if(email&&cfg.cloudUrl&&cfg.facilityKey){
+    fetch(`${cfg.cloudUrl}/sync/link-account`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-facility-key':cfg.facilityKey},
+      body:JSON.stringify({email,facility_profile_id:profile.id})
+    }).catch(()=>{});
+  }
   closeNewPlayer(); renderProfiles();
 }
 
@@ -1754,6 +1769,19 @@ function saveAndExit(){
   const r=sessionRecord();
   const sessions=STORE.get('tm-sessions')||[];
   sessions.push(r);STORE.save('tm-sessions',sessions);
+  // Push to cloud if configured — non-blocking, local save is source of truth
+  if(cfg.cloudUrl&&cfg.facilityKey){
+    fetch(`${cfg.cloudUrl}/sync/session`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-facility-key':cfg.facilityKey},
+      body:JSON.stringify({
+        id:r.id, player_id:r.playerId, date:r.date,
+        duration:r.duration, total_pitches:r.totalPitches,
+        avg_velo:r.avgVelo, max_velo:r.maxVelo, avg_spin:r.avgSpin,
+        by_type:r.byType, pitches:r.pitches, notes:r.notes
+      })
+    }).catch(()=>{});
+  }
   exitProfiles();
 }
 function discardAndExit(){exitProfiles();}
