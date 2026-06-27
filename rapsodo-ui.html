@@ -359,6 +359,39 @@ input,select,textarea{outline:none;font-family:inherit}
 .srow input:focus{border-color:var(--accent)}
 .srow .shint{font-size:9px;color:var(--dim);margin-top:3px}
 .sdiv{border:none;border-top:1px solid var(--border);margin:12px 0}
+
+/* ══ MODE SELECTION ═════════════════════════════════════════ */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.mode-btn{background:var(--surface2);border:2px solid var(--border2);border-radius:14px;
+  padding:26px 16px;cursor:pointer;transition:all .15s;text-align:center;color:var(--text);width:100%}
+.mode-btn:hover{border-color:var(--muted)}
+.mode-btn.live:hover,.mode-btn.live:focus{border-color:var(--accent);background:rgba(242,103,34,.08)}
+.mode-icon{font-size:36px;margin-bottom:10px}
+.mode-name{font-size:18px;font-weight:900;letter-spacing:.06em;margin-bottom:8px}
+.mode-desc{font-size:11px;color:var(--muted);line-height:1.55;font-weight:500}
+
+/* ══ COUNT DISPLAY ══════════════════════════════════════════ */
+.count-display{display:flex;align-items:center;gap:12px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:10px;padding:6px 14px}
+.count-group{display:flex;flex-direction:column;align-items:center;gap:5px}
+.cdots{display:flex;gap:5px}
+.cdot{width:11px;height:11px;border-radius:50%;background:var(--border2);border:1px solid var(--border2)}
+.cdot.on{border-color:transparent}
+.count-lbl{font-size:7px;letter-spacing:.1em;color:var(--muted);font-weight:800}
+.count-div{color:var(--dim);font-size:18px;padding-bottom:12px}
+.count-reset{background:none;border:1px solid var(--border2);border-radius:6px;
+  color:var(--muted);font-size:13px;padding:4px 8px;cursor:pointer;margin-left:2px}
+.count-reset:hover{color:var(--text);border-color:var(--muted)}
+
+/* ══ TAGGING PANELS ═════════════════════════════════════════ */
+.tag-panel{padding:7px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.tp-head{font-size:8px;letter-spacing:.12em;color:var(--muted);font-weight:800;flex:0 0 74px}
+.tp-btns{display:flex;gap:6px;flex-wrap:wrap}
+.tp-btn{padding:7px 15px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;
+  border:1px solid var(--border2);background:var(--surface2);color:var(--muted);
+  transition:all .12s;letter-spacing:.03em}
+.tp-btn:hover{filter:brightness(1.25);border-color:var(--muted)}
+.tp-btn.sel{color:#fff!important;border-color:transparent!important}
 </style>
 </head>
 <body>
@@ -503,6 +536,27 @@ input,select,textarea{outline:none;font-family:inherit}
   </div>
 </div>
 
+<!-- ══ MODE SELECTION MODAL ════════════════════════════════ -->
+<div class="modal-bg hidden" id="modal-mode">
+  <div class="modal" style="max-width:520px;text-align:center">
+    <h2 style="margin-bottom:6px">Start Session</h2>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:24px;font-weight:500">Choose session type for <span id="mode-player-name" style="color:var(--text);font-weight:800">—</span></p>
+    <div class="mode-grid">
+      <button class="mode-btn" onclick="startSession('bullpen')">
+        <div class="mode-icon">⚾</div>
+        <div class="mode-name">BULLPEN</div>
+        <div class="mode-desc">Pitch metrics and trajectory only — no count or outcome tracking</div>
+      </button>
+      <button class="mode-btn live" onclick="startSession('live')">
+        <div class="mode-icon">🎯</div>
+        <div class="mode-name">LIVE AB</div>
+        <div class="mode-desc">Full count tracking with ball, strike, foul, and outcome logging</div>
+      </button>
+    </div>
+    <button class="btn btn-ghost" style="width:100%;font-size:12px" onclick="$('modal-mode').classList.add('hidden')">Cancel</button>
+  </div>
+</div>
+
 <!-- ══ SESSION SCREEN ══════════════════════════════════════ -->
 <div id="screen-session" class="hidden">
   <div class="topbar">
@@ -514,6 +568,25 @@ input,select,textarea{outline:none;font-family:inherit}
     </div>
     <div class="tb-div"></div>
     <div class="sess-timer" id="sess-timer">0:00</div>
+    <div class="tb-div"></div>
+    <!-- Live AB count display — hidden in bullpen mode -->
+    <div class="count-display hidden" id="count-display">
+      <div class="count-group">
+        <div class="cdots" id="ball-dots"></div>
+        <div class="count-lbl">BALLS</div>
+      </div>
+      <div class="count-div">·</div>
+      <div class="count-group">
+        <div class="cdots" id="str-dots"></div>
+        <div class="count-lbl">STRIKES</div>
+      </div>
+      <div class="count-div">·</div>
+      <div class="count-group">
+        <div class="cdots" id="out-dots"></div>
+        <div class="count-lbl">OUTS</div>
+      </div>
+      <button class="count-reset" onclick="resetCount()" title="Reset count">↺</button>
+    </div>
     <div class="tb-div"></div>
     <div class="sess-stats">
       <div class="ss-stat"><div class="sv" id="ss-avg">—</div><div class="sl">AVG MPH</div></div>
@@ -642,6 +715,18 @@ input,select,textarea{outline:none;font-family:inherit}
   <div class="mlb-band" id="mlb-band" style="display:none">
     <div class="mlb-ttl" id="mlb-ttl">MLB %ILE</div>
     <div id="mlb-items" style="display:flex;flex-wrap:nowrap;overflow:hidden"></div>
+  </div>
+
+  <!-- Pitch type override — always visible when pitch selected -->
+  <div class="tag-panel hidden" id="type-panel">
+    <div class="tp-head">TYPE<br/>OVERRIDE</div>
+    <div class="tp-btns" id="type-btns"></div>
+  </div>
+
+  <!-- Result tagging — live AB mode only -->
+  <div class="tag-panel hidden" id="result-panel">
+    <div class="tp-head">RESULT</div>
+    <div class="tp-btns" id="result-btns"></div>
   </div>
 
   <div class="seq-strip" id="seq-strip">
@@ -803,7 +888,7 @@ async function pinSubmit(target){
     const h=await hashPIN(pinBuffer);
     if(h===pendingPlayer.pinHash){
       document.getElementById('modal-pin-verify').classList.add('hidden');
-      beginSession(pendingPlayer);
+      showModeModal(pendingPlayer);
     } else {
       showPinError('player-pin-error');
       pinBuffer=''; updatePinDots('player');
@@ -940,7 +1025,7 @@ function selectPlayer(p){
     document.getElementById('player-pin-error').classList.remove('show');
     document.getElementById('modal-pin-verify').classList.remove('hidden');
   } else {
-    beginSession(p);
+    showModeModal(p);
   }
 }
 function cancelPlayerPin(){
@@ -994,6 +1079,109 @@ async function saveNewPlayer(){
    ───────────────────────────────────────────────────────────── */
 let currentPlayer=null, currentSession=null, PITCHES=[], selIdx=-1, maxVelo=0;
 let sessInterval=null;
+let liveMode=false;
+let COUNT={b:0,s:0,o:0};
+
+/* ── MODE / COUNT ── */
+function showModeModal(p){
+  pendingPlayer=p;
+  document.getElementById('mode-player-name').textContent=p.name;
+  document.getElementById('modal-mode').classList.remove('hidden');
+}
+function startSession(mode){
+  document.getElementById('modal-mode').classList.add('hidden');
+  liveMode=(mode==='live');
+  COUNT={b:0,s:0,o:0};
+  beginSession(pendingPlayer, mode);
+}
+function renderCountDots(){
+  const cfg2=[['ball-dots',COUNT.b,4,'#22c55e'],['str-dots',COUNT.s,3,'#f26722'],['out-dots',COUNT.o,3,'#ef4444']];
+  cfg2.forEach(([id,val,max,col])=>{
+    const el=document.getElementById(id);
+    el.innerHTML='';
+    for(let i=0;i<max;i++){
+      const d=document.createElement('div');
+      d.className='cdot'+(i<val?' on':'');
+      if(i<val)d.style.background=col;
+      el.appendChild(d);
+    }
+  });
+}
+function resetCount(){COUNT={b:0,s:0,o:0};renderCountDots();}
+function logResult(result){
+  if(selIdx>=0&&selIdx<PITCHES.length){
+    PITCHES[selIdx].result=result;
+    if(currentSession)currentSession.pitches[selIdx].result=result;
+  }
+  // Auto-advance count
+  if(result==='Ball'){
+    COUNT.b++;
+    if(COUNT.b>=4){COUNT={b:0,s:0,o:0};}
+  } else if(result==='Called Strike'||result==='Swing Miss'){
+    COUNT.s++;
+    if(COUNT.s>=3){COUNT.s=0;COUNT.b=0;COUNT.o++;if(COUNT.o>=3)COUNT={b:0,s:0,o:0};}
+  } else if(result==='Foul'){
+    if(COUNT.s<2){COUNT.s++;}
+  } else if(result==='In-Play Out'){
+    COUNT.o++;if(COUNT.o>=3)COUNT={b:0,s:0,o:0};
+    COUNT.b=0;COUNT.s=0;
+  } else if(result==='Hit'){
+    COUNT={b:0,s:0,o:0};
+  }
+  renderCountDots();
+  // Highlight selected result button
+  document.querySelectorAll('#result-btns .tp-btn').forEach(b=>{
+    b.classList.toggle('sel',b.dataset.result===result);
+    if(b.dataset.result===result)b.style.background=b.dataset.color;
+    else b.style.background='';
+  });
+  refresh();
+}
+function overrideType(code){
+  if(selIdx<0||selIdx>=PITCHES.length)return;
+  const t=resolveType(code);
+  PITCHES[selIdx].code=code;
+  PITCHES[selIdx].type=t.label;
+  PITCHES[selIdx].short=t.short;
+  PITCHES[selIdx].color=t.color;
+  if(currentSession)Object.assign(currentSession.pitches[selIdx],{code,type:t.label,short:t.short,color:t.color});
+  // Highlight selected type button
+  document.querySelectorAll('#type-btns .tp-btn').forEach(b=>{
+    b.classList.toggle('sel',b.dataset.code===code);
+    if(b.dataset.code===code)b.style.background=t.color;
+    else b.style.background='';
+  });
+  refresh();
+}
+function buildTagPanels(){
+  // Type buttons — all pitch types
+  const tb=document.getElementById('type-btns');
+  tb.innerHTML='';
+  Object.entries(TYPE_MAP).forEach(([code,t])=>{
+    const b=document.createElement('button');
+    b.className='tp-btn';b.textContent=t.short;b.dataset.code=code;b.dataset.color=t.color;
+    b.title=t.label;
+    b.onclick=()=>overrideType(code);
+    tb.appendChild(b);
+  });
+  // Result buttons — live only
+  const rb=document.getElementById('result-btns');
+  rb.innerHTML='';
+  const results=[
+    {label:'Ball',color:'#6b7585'},
+    {label:'Called Strike',color:'#22c55e'},
+    {label:'Swing Miss',color:'#f26722'},
+    {label:'Foul',color:'#eab308'},
+    {label:'In-Play Out',color:'#3b82f6'},
+    {label:'Hit',color:'#ef4444'},
+  ];
+  results.forEach(({label,color})=>{
+    const b=document.createElement('button');
+    b.className='tp-btn';b.textContent=label;b.dataset.result=label;b.dataset.color=color;
+    b.onclick=()=>logResult(label);
+    rb.appendChild(b);
+  });
+}
 
 /* Demo roster + pitch simulator (stands in for the Pi/Rapsodo feed) */
 const DEMO_PROFILES=[
@@ -1002,7 +1190,7 @@ const DEMO_PROFILES=[
   {id:'d3',name:'Marcus Cole',  throws:'R',position:'CL',team:'Retrievers',color:'#22c55e',pinHash:null},
   {id:'d4',name:'Ethan Park',   throws:'R',position:'SP',team:'Retrievers',color:'#8b5cf6',pinHash:null}
 ];
-const KIND_LABEL={bullpen:'BULLPEN',liveab:'LIVE ABS',flatground:'FLAT GROUND'};
+const KIND_LABEL={bullpen:'BULLPEN',live:'LIVE AB',liveab:'LIVE ABS',flatground:'FLAT GROUND'};
 const SIM_PITCHES=[
   {code:'FF',velo:[92,97],spin:[2250,2480],eff:[92,98],ivb:[15,20],hb:[6,10],  tilt:'12:45',gyro:[10,18],h_angle:[-1.5,1.5], r_angle:[-3.5,-2.0],r_side:[-2.2,-1.0],lat:[-4.5,-3.0],lon:[-1.0,1.0]},
   {code:'SL',velo:[84,88],spin:[2450,2700],eff:[35,52],ivb:[0,4],  hb:[-9,-4], tilt:'9:30', gyro:[48,62],h_angle:[-4.5,-1.5],r_angle:[-3.0,-1.5],r_side:[-2.5,-1.2],lat:[-2.5,-1.0],lon:[-3.5,-1.0]},
@@ -1043,6 +1231,8 @@ function showDemoBtn(on){
 
 function beginSession(player,kind,skipWS){
   currentPlayer=player;
+  liveMode=(kind==='live');
+  COUNT={b:0,s:0,o:0};
   currentSession={id:crypto.randomUUID(),playerId:player.id,kind:kind||'bullpen',startTime:Date.now(),pitches:[]};
   PITCHES=[]; selIdx=-1; maxVelo=0;
   clearTrajHistory();
@@ -1054,6 +1244,11 @@ function beginSession(player,kind,skipWS){
     +` &nbsp;<span style="color:#f26722;font-weight:800">${KIND_LABEL[currentSession.kind]||''}</span>`;
   document.getElementById('screen-profiles').classList.add('hidden');
   document.getElementById('screen-session').classList.remove('hidden');
+  // Show/hide live-only UI
+  const cd=document.getElementById('count-display');
+  cd.classList.toggle('hidden',!liveMode);
+  if(liveMode)renderCountDots();
+  buildTagPanels();
   // Lazy-init 2D canvas — defer one RAF so the browser lays out #scene first
   if(!c2d) requestAnimationFrame(init3D);
   clearInterval(sessInterval);
@@ -1375,6 +1570,26 @@ function refresh(){
   drawMov('movplot',PITCHES,selIdx);
   drawLoc('locplot',PITCHES,selIdx);
   drawTrend();
+  // Show type-override panel when any pitch is selected
+  const hasSel=selIdx>=0&&selIdx<PITCHES.length;
+  document.getElementById('type-panel').classList.toggle('hidden',!hasSel);
+  document.getElementById('result-panel').classList.toggle('hidden',!(hasSel&&liveMode));
+  // Sync selected pitch's code/result into button highlights
+  if(hasSel){
+    const p=PITCHES[selIdx];
+    document.querySelectorAll('#type-btns .tp-btn').forEach(b=>{
+      const on=b.dataset.code===p.code;
+      b.classList.toggle('sel',on);
+      b.style.background=on?TYPE_MAP[p.code]?.color||'#6b7585':'';
+    });
+    if(liveMode){
+      document.querySelectorAll('#result-btns .tp-btn').forEach(b=>{
+        const on=b.dataset.result===p.result;
+        b.classList.toggle('sel',on);
+        b.style.background=on?b.dataset.color:'';
+      });
+    }
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────
