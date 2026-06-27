@@ -1081,6 +1081,7 @@ let currentPlayer=null, currentSession=null, PITCHES=[], selIdx=-1, maxVelo=0;
 let sessInterval=null;
 let liveMode=false;
 let COUNT={b:0,s:0,o:0};
+let countFromIdx=0; // recompute only considers pitches at or after this index
 
 /* ── MODE / COUNT ── */
 function showModeModal(p){
@@ -1092,6 +1093,7 @@ function startSession(mode){
   document.getElementById('modal-mode').classList.add('hidden');
   liveMode=(mode==='live');
   COUNT={b:0,s:0,o:0};
+  countFromIdx=0;
   beginSession(pendingPlayer, mode);
 }
 function renderCountDots(){
@@ -1107,28 +1109,28 @@ function renderCountDots(){
     }
   });
 }
-function resetCount(){COUNT={b:0,s:0,o:0};renderCountDots();}
+// Replay all pitch results from countFromIdx to derive the correct count
+function recomputeCount(){
+  let b=0,s=0,o=0;
+  for(let i=countFromIdx;i<PITCHES.length;i++){
+    const r=PITCHES[i].result;
+    if(r==='Ball'){b++;if(b>=4){b=0;s=0;}}
+    else if(r==='Called Strike'||r==='Swing Miss'){s++;if(s>=3){s=0;b=0;o++;if(o>=3){b=0;s=0;o=0;}}}
+    else if(r==='Foul'){if(s<2)s++;}
+    else if(r==='In-Play Out'){o++;b=0;s=0;if(o>=3){b=0;s=0;o=0;}}
+    else if(r==='Hit'){b=0;s=0;}
+  }
+  COUNT={b,s,o};
+  renderCountDots();
+}
+// Manual reset — anchor replay to the next incoming pitch so old pitches don't affect the new count
+function resetCount(){countFromIdx=PITCHES.length;COUNT={b:0,s:0,o:0};renderCountDots();}
 function logResult(result){
   if(selIdx>=0&&selIdx<PITCHES.length){
     PITCHES[selIdx].result=result;
     if(currentSession)currentSession.pitches[selIdx].result=result;
   }
-  // Auto-advance count
-  if(result==='Ball'){
-    COUNT.b++;
-    if(COUNT.b>=4){COUNT={b:0,s:0,o:0};}
-  } else if(result==='Called Strike'||result==='Swing Miss'){
-    COUNT.s++;
-    if(COUNT.s>=3){COUNT.s=0;COUNT.b=0;COUNT.o++;if(COUNT.o>=3)COUNT={b:0,s:0,o:0};}
-  } else if(result==='Foul'){
-    if(COUNT.s<2){COUNT.s++;}
-  } else if(result==='In-Play Out'){
-    COUNT.o++;if(COUNT.o>=3)COUNT={b:0,s:0,o:0};
-    COUNT.b=0;COUNT.s=0;
-  } else if(result==='Hit'){
-    COUNT={b:0,s:0,o:0};
-  }
-  renderCountDots();
+  recomputeCount();
   // Highlight selected result button
   document.querySelectorAll('#result-btns .tp-btn').forEach(b=>{
     b.classList.toggle('sel',b.dataset.result===result);
@@ -1237,6 +1239,7 @@ function beginSession(player,kind,skipWS){
   currentPlayer=player;
   liveMode=(kind==='live');
   COUNT={b:0,s:0,o:0};
+  countFromIdx=0;
   currentSession={id:crypto.randomUUID(),playerId:player.id,kind:kind||'bullpen',startTime:Date.now(),pitches:[]};
   PITCHES=[]; selIdx=-1; maxVelo=0;
   clearTrajHistory();
@@ -1331,15 +1334,7 @@ function autoBallStrike(p){
   const call=inZone?'Called Strike':'Ball';
   p.result=call;
   if(currentSession&&currentSession.pitches[selIdx])currentSession.pitches[selIdx].result=call;
-  // Advance count without re-checking selIdx (already set above)
-  if(call==='Ball'){
-    COUNT.b++;
-    if(COUNT.b>=4)COUNT={b:0,s:0,o:0};
-  } else {
-    COUNT.s++;
-    if(COUNT.s>=3){COUNT.s=0;COUNT.b=0;COUNT.o++;if(COUNT.o>=3)COUNT={b:0,s:0,o:0};}
-  }
-  renderCountDots();
+  recomputeCount();
   refresh();
 }
 
